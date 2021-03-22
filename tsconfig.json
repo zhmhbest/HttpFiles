@@ -1,0 +1,26 @@
+{
+    "compilerOptions": {
+        // 输出配置
+        "module": "CommonJS",
+        "target": "ES6",
+        // "sourceMap": true,
+        // "declaration": true,
+        "rootDir": "./src",
+        "outDir": "./out",
+
+        // 源码检查
+        "strict": true,
+        "skipLibCheck": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        // "noUnusedParameters": true,
+    },
+    "include": [
+        "./src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "out"
+    ]
+}
