@@ -35,7 +35,7 @@ export class HttpApp {
     }
 
     public static getBody(req: IncomingMessage) {
-        return new Promise<any>((resolve, rejects) => {
+        return new Promise<Buffer>((resolve, rejects) => {
             const buffer: Array<Buffer> = [];
             req.on('error', (err) => {
                 rejects(err);
