@@ -1,16 +1,21 @@
 import * as http from "http";
-import { Server, IncomingMessage, ServerResponse } from "http";
+import { Server, IncomingMessage, ServerResponse, IncomingHttpHeaders } from "http";
 
 type HttpMethodType =
     'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' |
     'COPY' | 'HEAD' | 'OPTIONS' |
     'LINK' | 'UNLINK' | 'PURGE' | 'LOCK' | 'UNLOCK' | 'PROPFIND'
 type HttpPathMatcher = string | RegExp;
+interface HttpEasyResponse {
+    body: any,
+    status?: number,
+    headers?: IncomingHttpHeaders
+};
 type HttpRequestEvent = (
     match: RegExpMatchArray,
     req: IncomingMessage,
     res: ServerResponse
-) => void;
+) => Promise<void | string | HttpEasyResponse>;
 interface HttpRequestInterface {
     method?: HttpMethodType,
     pathname: HttpPathMatcher,
@@ -35,7 +40,7 @@ export class HttpApp {
             item.method = pathname[0].toUpperCase() as HttpMethodType;
             item.pathname = pathname[1];
         } else {
-            item.method =undefined;
+            item.method = undefined;
             item.pathname = pathname;
         }
         item.event = event;
@@ -55,14 +60,33 @@ export class HttpApp {
             });
             const pathName = undefined === req.url ? '/' : req.url.toString();
             let isNotMatched = true;
-            for(let item of this.m_interfaces) {
+            for (let item of this.m_interfaces) {
                 // 验证Method
-                if(undefined !== item.method && req.method !== item.method) continue;
+                if (undefined !== item.method && req.method !== item.method) continue;
                 // 验证Pathname
                 const match = pathName.match(item.pathname);
                 if (null == match) continue;
                 // 调用方法
-                item.event(match, req, res);
+                item.event(match, req, res).then(result => {
+                    // 智能返回
+                    if (undefined !== result) {
+                        if ('string' === typeof result) {
+                            res.writeHead(200);
+                            res.write(result);
+                        } else {
+                            if (undefined !== result.headers) {
+                                for (let item of Object.keys(result.headers)) {
+                                    res.setHeader(item, result.headers[item] as string)
+                                }
+                            }
+                            res.writeHead(undefined === result.status ? 200 : result.status);
+                            res.write(result.body);
+                        }
+                    }
+                    // 关闭连接
+                    res.end();
+                });
+                // 推出循环
                 isNotMatched = false;
                 break;
             }
@@ -76,7 +100,7 @@ export class HttpApp {
             console.log(`${undefined === req.method ? '*' : req.method} ${pathName}`);
         });
         this.m_server.listen(this.m_port, this.m_host, () => {
-            for(let item of this.m_interfaces) {
+            for (let item of this.m_interfaces) {
                 console.log(`- ${undefined === item.method ? '*' : item.method} ${item.pathname}`);
             }
             console.log(`Web Server started at http://${this.m_host}:${this.m_port}`);
