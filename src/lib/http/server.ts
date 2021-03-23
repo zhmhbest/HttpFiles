@@ -34,6 +34,21 @@ export class HttpApp {
         this.m_interfaces = [];
     }
 
+    public static getBody(req: IncomingMessage) {
+        return new Promise<any>((resolve, rejects) => {
+            const buffer: Array<Buffer> = [];
+            req.on('error', (err) => {
+                rejects(err);
+            });
+            req.on('data', (chunk) => {
+                buffer.push(chunk);
+            });
+            req.on('end', () => {
+                resolve(Buffer.concat(buffer));
+            });
+        });
+    }
+
     public on(pathname: HttpPathMatcher | [HttpMethodType, HttpPathMatcher], event: HttpRequestEvent): void {
         let item = {} as HttpRequestInterface;
         if (pathname instanceof Array) {
@@ -106,4 +121,4 @@ export class HttpApp {
             console.log(`Web Server started at http://${this.m_host}:${this.m_port}`);
         });
     }
-}
+};
