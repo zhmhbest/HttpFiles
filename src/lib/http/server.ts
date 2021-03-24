@@ -1,3 +1,5 @@
+import * as querystring from "querystring";
+import * as multiparty from "multiparty";
 import * as http from "http";
 import { Server, IncomingMessage, ServerResponse, IncomingHttpHeaders } from "http";
 
@@ -6,16 +8,27 @@ type HttpMethodType =
     'COPY' | 'HEAD' | 'OPTIONS' |
     'LINK' | 'UNLINK' | 'PURGE' | 'LOCK' | 'UNLOCK' | 'PROPFIND'
 type HttpPathMatcher = string | RegExp;
+
 interface HttpEasyResponse {
     body: any,
     status?: number,
     headers?: IncomingHttpHeaders
 };
+
 type HttpRequestEvent = (
     match: RegExpMatchArray,
     req: IncomingMessage,
     res: ServerResponse
 ) => Promise<void | string | HttpEasyResponse>;
+
+type HttpRequestApiEvent = (
+    match: RegExpMatchArray,
+    method: HttpMethodType,
+    status: number,
+    headers: IncomingHttpHeaders,
+    query: NodeJS.Dict<any>
+) => Promise<void | string | HttpEasyResponse>;
+
 interface HttpRequestInterface {
     method?: HttpMethodType,
     pathname: HttpPathMatcher,
@@ -34,6 +47,7 @@ export class HttpApp {
         this.m_interfaces = [];
     }
 
+    // 异步
     public static getBody(req: IncomingMessage) {
         return new Promise<Buffer>((resolve, rejects) => {
             const buffer: Array<Buffer> = [];
@@ -49,6 +63,38 @@ export class HttpApp {
         });
     }
 
+    // 异步
+    public static getQuery(req: IncomingMessage) {
+        return new Promise<NodeJS.Dict<any>>((resolve, rejects) => {
+            const s = req.url || '';
+            const l = s.indexOf('?');
+            if (l >= 0) {
+                // Line
+                const qs = s.substr(s.indexOf('?') + 1);
+                resolve({ ...querystring.parse(qs) });
+            } else {
+                // Body
+                const contentType = req.headers['content-type'];
+                if (undefined === contentType) { rejects(new Error('Undefined Content-Type!')); return; }
+                // FormData
+                if ('multipart/form-data' === contentType.split(';', 1)[0]) {
+                    const form = new multiparty.Form();
+                    form.parse(req, (error: Error, fields: any, files: any) => {
+                        if (error) {
+                            rejects(error);
+                        }
+                        resolve({ ...fields, ...files });
+                    });
+                } else {
+                    // WWW
+                    HttpApp.getBody(req).then(body => {
+                        resolve({ ...querystring.parse(body.toString('utf-8')) });
+                    });
+                }
+            }
+        });
+    }
+
     public on(pathname: HttpPathMatcher | [HttpMethodType, HttpPathMatcher], event: HttpRequestEvent): void {
         let item = {} as HttpRequestInterface;
         if (pathname instanceof Array) {
@@ -59,6 +105,35 @@ export class HttpApp {
             item.pathname = pathname;
         }
         item.event = event;
+        this.m_interfaces.push(item);
+    }
+
+    public onApi(pathname: HttpPathMatcher | [HttpMethodType, HttpPathMatcher], event: HttpRequestApiEvent): void {
+        let item = {} as HttpRequestInterface;
+        if (pathname instanceof Array) {
+            item.method = pathname[0].toUpperCase() as HttpMethodType;
+            item.pathname = pathname[1];
+        } else {
+            item.method = undefined;
+            item.pathname = pathname;
+        }
+        item.event = (match, req, res) => new Promise<void | string | HttpEasyResponse>((resolve, rejects) => {
+            HttpApp.getQuery(req).then(query => {
+                event(match, req.method as HttpMethodType, req.statusCode || 500, req.headers, query)
+                    .then(r => {
+                        if (r instanceof Object) {
+                            // r = r as HttpEasyResponse;
+                            r.body = JSON.stringify(r);
+                            if (undefined === r.headers) {
+                                r.headers = { 'content-type': 'text/json' };
+                            } else {
+                                r.headers['content-type'] = 'text/json';
+                            }
+                        }
+                        resolve(r);
+                    });
+            });
+        });
         this.m_interfaces.push(item);
     }
 

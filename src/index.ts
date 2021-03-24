@@ -10,14 +10,14 @@ app.on(/^\/$/, async (m, req, res) => {
     res.writeHead(302);
     res.end();
 });
-app.on(['GET', /^\/hello$/], async (m, req, res) => {
+app.on(['GET', /^\/hello$/], async (match, req, res) => {
     return "Hello";
 });
-app.on(/^\/test$/, async (m, req, res) => {
+app.on(/^\/test$/, async (match, req, res) => {
     let body; await HttpApp.getBody(req).then(r => body = r.toString());
     return {
         body: JSON.stringify({
-            path: req.url,
+            match: match,
             method: req.method,
             headers: req.headers,
             body: body,
@@ -25,6 +25,17 @@ app.on(/^\/test$/, async (m, req, res) => {
         status: 201,
         headers: {
             'content-type': 'text/json'
+        }
+    };
+});
+app.onApi(/^\/api/, async (match, method, status, headers, query) => {
+    return {
+        body: {
+            match,
+            method,
+            status,
+            headers,
+            query,
         }
     };
 });
