@@ -103,14 +103,15 @@ export class HttpApp {
         switch (extName) {
             case '.htm':
             case '.html':
-                return 'text/html';
+                return 'text/html; charset=utf-8';
             case '.js':
-                return 'text/javascript';
+                return 'text/javascript; charset=utf-8';
             case '.css':
-                return 'text/css';
+                return 'text/css; charset=utf-8';
             case '.txt':
             case '.text':
-                return 'text/plain';
+            case '.md':
+                return 'text/plain; charset=utf-8';
             case '.ttf':
                 return 'font/ttf';
             // 数据
@@ -118,6 +119,8 @@ export class HttpApp {
                 return 'application/json';
             case '.xml':
                 return 'application/xml';
+            case '.csv':
+                return 'application/csv';
             // 图片
             case '.ico':
                 return 'image/x-icon';
@@ -205,10 +208,11 @@ export class HttpApp {
                         // 返回目录
                         res.setHeader('content-type', 'text/html; charset=utf-8');
                         const fileNames = fs.readdirSync(topFileName);
-                        res.write('<style>body{font-size:150%;color:white;background-color:black}a{text-decoration:none}a:link{color: pink}a:visited{color: hotpink}</style>');
-                        res.write('<ul>');
+                        res.write('<style>body{font-size:150%;color:grey;background-color:black}a{text-decoration:none}a:link{color:pink}a:visited{color:hotpink}</style>');
+                        res.write(`<h2>${prefix}${aliasName}</h2>`);
+                        res.write('<table>');
                         // 返回上级
-                        res.write(`<li style='list-style:circle'}'><a href='${prefix}${aliasName}/..'>../</a></li>\n`);
+                        res.write(`<tr><td></td><td><a href='${prefix}${aliasName}/..'>../</a></td><td>Size</td><td>LastModify</td></tr>\n`);
                         for (let name of fileNames) {
                             const fileName = path.join(topFileName, name);
                             let fileStat;
@@ -218,10 +222,10 @@ export class HttpApp {
                                 fileStat = fs.statSync(fileName);
                                 realName = `${prefix}${aliasName}/${name}`;
                                 showName = path.basename(`${aliasName}/${name}`);
-                                res.write(`<li style='margin-top: 5px; list-style:${fileStat.isDirectory()?'circle':'disc'}'><a href='${realName}'>${showName}</a></li>\n`);
-                            } catch(err) {}
+                                res.write(`<tr><td>${fileStat.isDirectory() ? '○' : '●'}</td><td><a href='${realName}'>${showName}</a></td><td>${fileStat.size}</td><td>${fileStat.mtime.toLocaleString()}</td></tr>\n`);
+                            } catch (err) { }
                         }
-                        res.write('</ul>');
+                        res.write('</table>');
                         res.end();
                         resolve();
                     } else {
