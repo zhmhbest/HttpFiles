@@ -1,5 +1,4 @@
 import * as path from 'path';
-import * as fs from 'fs';
 console.log("Hello", path.resolve("."));
 
 import { HttpApp } from './lib/http';
@@ -24,7 +23,7 @@ app.on(/^\/test$/, async (match, req, res) => {
         }),
         status: 201,
         headers: {
-            'content-type': 'text/json'
+            'content-type': 'application/json'
         }
     };
 });
@@ -39,4 +38,5 @@ app.onApi(/^\/api/, async (match, method, status, headers, query) => {
         }
     };
 });
+app.onFile("/file", path.join(__dirname, "html"));
 app.listen();

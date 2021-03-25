@@ -1,6 +1,8 @@
 import * as querystring from "querystring";
 import * as multiparty from "multiparty";
 import * as http from "http";
+import * as fs from "fs";
+import * as path from "path";
 import { Server, IncomingMessage, ServerResponse, IncomingHttpHeaders } from "http";
 
 type HttpMethodType =
@@ -95,6 +97,55 @@ export class HttpApp {
         });
     }
 
+    // 同步
+    public static getMimeType(fileName: string): string {
+        const extName = path.extname(fileName).toLowerCase();
+        switch (extName) {
+            case '.htm':
+            case '.html':
+                return 'text/html';
+            case '.js':
+                return 'text/javascript';
+            case '.css':
+                return 'text/css';
+            case '.txt':
+            case '.text':
+                return 'text/plain';
+            case '.ttf':
+                return 'font/ttf';
+            // 数据
+            case '.json':
+                return 'application/json';
+            case '.xml':
+                return 'application/xml';
+            // 图片
+            case '.ico':
+                return 'image/x-icon';
+            case '.jpg':
+            case '.jpeg':
+                return 'image/jpeg';
+            case '.png':
+                return 'image/png';
+            case '.bmp':
+                return 'image/bmp';
+            case '.gif':
+                return 'image/gif';
+            case '.svg':
+                return 'image/svg+xml';
+            // 媒体
+            case '.mp3':
+                return 'audio/mpeg';
+            case '.mid':
+            case '.midi':
+                return 'audio/midi';
+            case '.mp4':
+                return 'video/mp4';
+            // 默认
+            default:
+                return 'application/octet-stream';
+        }
+    }
+
     public on(pathname: HttpPathMatcher | [HttpMethodType, HttpPathMatcher], event: HttpRequestEvent): void {
         let item = {} as HttpRequestInterface;
         if (pathname instanceof Array) {
@@ -125,9 +176,9 @@ export class HttpApp {
                             // r = r as HttpEasyResponse;
                             r.body = JSON.stringify(r);
                             if (undefined === r.headers) {
-                                r.headers = { 'content-type': 'text/json' };
+                                r.headers = { 'content-type': 'application/json' };
                             } else {
-                                r.headers['content-type'] = 'text/json';
+                                r.headers['content-type'] = 'application/json';
                             }
                         }
                         resolve(r);
@@ -137,8 +188,33 @@ export class HttpApp {
         this.m_interfaces.push(item);
     }
 
-    // public html(prefix: string, dirpath: string): void {
-    // }
+    public onFile(prefix: string, dirpath: string): void {
+        this.m_interfaces.push({
+            method: 'GET',
+            pathname: new RegExp(`^${prefix}($|/.*$)`),
+            event: (match, req, res) => new Promise<void | string | HttpEasyResponse>((resolve, rejects) => {
+                let aliasName = 0 === match[1].length ? '/' : match[1];
+                let fileName, fileState;
+                try {
+                    // 获取文件名、判断是否存在
+                    fileName = path.join(dirpath, aliasName);
+                    fileState = fs.statSync(fileName);
+                    if (fileState.isDirectory()) {
+                        fileName = path.join(fileName, 'index.html');
+                        fileState = fs.statSync(fileName);
+                    }
+                    res.setHeader('content-type', HttpApp.getMimeType(fileName));
+                    res.write(fs.readFileSync(fileName, { flag: 'r' }));
+                    res.end();
+                } catch (err) {
+                    res.writeHead(404);
+                    res.write("Not Found!");
+                    res.end();
+                    resolve();
+                }
+            })
+        });
+    }
 
     public listen(): void {
         this.m_server = http.createServer((req: IncomingMessage, res: ServerResponse) => {
