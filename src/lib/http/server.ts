@@ -189,23 +189,48 @@ export class HttpApp {
     }
 
     public onFile(prefix: string, dirpath: string): void {
+        // prefix
+        prefix = prefix.endsWith('/') ? prefix.substr(0, prefix.length - 1) : prefix;
+        // interface
         this.m_interfaces.push({
             method: 'GET',
             pathname: new RegExp(`^${prefix}($|/.*$)`),
             event: (match, req, res) => new Promise<void | string | HttpEasyResponse>((resolve, rejects) => {
-                let aliasName = 0 === match[1].length ? '/' : match[1];
-                let fileName, fileState;
+                const aliasName = decodeURI(match[1].endsWith('/') ? match[1].substr(0, match[1].length - 1) : match[1]);
                 try {
                     // 获取文件名、判断是否存在
-                    fileName = path.join(dirpath, aliasName);
-                    fileState = fs.statSync(fileName);
-                    if (fileState.isDirectory()) {
-                        fileName = path.join(fileName, 'index.html');
-                        fileState = fs.statSync(fileName);
+                    const topFileName = path.join(dirpath, aliasName);
+                    const topFileState = fs.statSync(topFileName);
+                    if (topFileState.isDirectory()) {
+                        // 返回目录
+                        res.setHeader('content-type', 'text/html; charset=utf-8');
+                        const fileNames = fs.readdirSync(topFileName);
+                        res.write('<style>body{font-size:150%;color:white;background-color:black}a{text-decoration:none}a:link{color: pink}a:visited{color: hotpink}</style>');
+                        res.write('<ul>');
+                        // 返回上级
+                        res.write(`<li style='list-style:circle'}'><a href='${prefix}${aliasName}/..'>../</a></li>\n`);
+                        for (let name of fileNames) {
+                            const fileName = path.join(topFileName, name);
+                            let fileStat;
+                            let realName;
+                            let showName;
+                            try {
+                                fileStat = fs.statSync(fileName);
+                                realName = `${prefix}${aliasName}/${name}`;
+                                showName = path.basename(`${aliasName}/${name}`);
+                                res.write(`<li style='margin-top: 5px; list-style:${fileStat.isDirectory()?'circle':'disc'}'><a href='${realName}'>${showName}</a></li>\n`);
+                            } catch(err) {}
+                        }
+                        res.write('</ul>');
+                        res.end();
+                        resolve();
+                    } else {
+                        // 返回文件
+                        res.setHeader('content-type', HttpApp.getMimeType(topFileName));
+                        res.write(fs.readFileSync(topFileName, { flag: 'r' }));
+                        res.end();
+                        resolve();
                     }
-                    res.setHeader('content-type', HttpApp.getMimeType(fileName));
-                    res.write(fs.readFileSync(fileName, { flag: 'r' }));
-                    res.end();
                 } catch (err) {
                     res.writeHead(404);
                     res.write("Not Found!");
