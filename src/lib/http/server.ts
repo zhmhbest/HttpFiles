@@ -176,7 +176,7 @@ export class HttpApp {
                     // 关闭连接
                     res.end();
                 });
-                // 推出循环
+                // 退出循环
                 isNotMatched = false;
                 break;
             }
