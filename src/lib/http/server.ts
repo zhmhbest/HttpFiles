@@ -4,6 +4,7 @@ import * as http from "http";
 import * as fs from "fs";
 import * as path from "path";
 import { Server, IncomingMessage, ServerResponse, IncomingHttpHeaders } from "http";
+import { request } from "./request";
 
 type HttpMethodType =
     'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' |
@@ -286,8 +287,12 @@ export class HttpApp {
         res.end();
     }
 
+    private static getPurePath(pathname: string): string {
+        return pathname.endsWith('/') ? pathname.substr(0, pathname.length - 1) : pathname;
+    }
+
     public onFiles(prefixPath: string, dirPath: string, isListDir?: boolean, indexHtmlNames?: Array<string>): void {
-        prefixPath = prefixPath.endsWith('/') ? prefixPath.substr(0, prefixPath.length - 1) : prefixPath;
+        prefixPath = HttpApp.getPurePath(prefixPath);
         isListDir = isListDir || false;
         const defaultHtmlNames = ['index.html', 'index.htm'];
 
@@ -297,7 +302,7 @@ export class HttpApp {
             pathname: new RegExp(`^${prefixPath}($|/.*$)`),
             event: (match, req, res) => new Promise<void | string | HttpEasyResponse>((resolve, rejects) => {
                 // 路径
-                const topAliasName = decodeURI(match[1].endsWith('/') ? match[1].substr(0, match[1].length - 1) : match[1]);
+                const topAliasName = decodeURI(HttpApp.getPurePath(match[1]));
                 const topPathName = `${prefixPath}${topAliasName}`;
                 try {
                     // 获取文件名、判断是否存在
@@ -332,6 +337,35 @@ export class HttpApp {
                     HttpApp.errorCode404(res);
                     resolve(); return;
                 }
+            })
+        });
+    }
+
+    public onMapping(prefixPath: string, realPrefixPath: string): void {
+        prefixPath = HttpApp.getPurePath(prefixPath);
+        realPrefixPath = HttpApp.getPurePath(realPrefixPath);
+        this.m_interfaces.push({
+            method: undefined,
+            pathname: new RegExp(`^${prefixPath}($|/.*$)`),
+            event: (match, req, res) => new Promise<void | string | HttpEasyResponse>((resolve, rejects) => {
+                const aliasName = decodeURI(match[1]);
+                const realPath = `${realPrefixPath}${aliasName}`;
+                const url = new URL(realPath);
+                request({
+                    url: url,
+                    method: req.method,
+                    headers: {...req.headers, host: `${url.host}`},
+                    body: req,
+                    waitHeader: (status: number, headers: IncomingHttpHeaders) => {
+                        res.writeHead(status, headers);
+                    },
+                    waitChunk: (chunk: Buffer) => {
+                        res.write(chunk);
+                    }
+                }).then(r => {
+                    res.end();
+                    resolve();
+                });
             })
         });
     }
