@@ -226,7 +226,7 @@ export class HttpApp {
                         // Head
                         res.write('<head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"><style>');
                         res.write('body{font-size:150%;font-family:serif;color:#999999;background-color:#333333}');
-                        res.write('table{width:100%}tr{margin-top:8px}');
+                        res.write('table{width:100%}tr{margin-top:8px}tr:hover{background-color: black}');
                         res.write('a{text-decoration:none}a:link{color:pink}a:visited{color:hotpink}');
                         res.write('.main{margin-left:6%;margin-right:6%}');
                         res.write('</style></head>\n');
@@ -250,8 +250,8 @@ export class HttpApp {
                                 res.write(`<td>${fileStat.isDirectory() ? '□' : '■'}</td>`);
                                 res.write(`<td><a href='${pathName}'>${name}</a></td>`);
                                 res.write(`<td>${fileStat.isDirectory() ? '' : HttpApp.formatFileSize(fileStat.size)}</td>`);
-                                res.write(`<td>${fileStat.ctime.toLocaleString()}</td>`);
-                                res.write(`<td>${fileStat.mtime.toLocaleString()}</td>`);
+                                res.write(`<td>${fileStat.isDirectory() ? '' : fileStat.ctime.toLocaleString()}</td>`);
+                                res.write(`<td>${fileStat.isDirectory() ? '' : fileStat.mtime.toLocaleString()}</td>`);
                                 res.write(`</tr>\n`);
                             } catch (err) { continue; }
                         }
