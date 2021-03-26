@@ -98,9 +98,9 @@ export class HttpApp {
     }
 
     // 同步
-    public static getMimeType(fileName: string): string {
-        const extName = path.extname(fileName).toLowerCase();
+    public static getMimeType(extName: string): string {
         switch (extName) {
+            // html+css+js
             case '.htm':
             case '.html':
                 return 'text/html; charset=utf-8';
@@ -108,11 +108,11 @@ export class HttpApp {
                 return 'text/javascript; charset=utf-8';
             case '.css':
                 return 'text/css; charset=utf-8';
+            // 文本
             case '.txt':
             case '.text':
-            case '.md':
-            case '.sql':
                 return 'text/plain; charset=utf-8';
+            // 字体
             case '.ttf':
                 return 'font/ttf';
             // 数据
@@ -205,7 +205,20 @@ export class HttpApp {
         this.m_interfaces.push(item);
     }
 
-    // 同步
+    private static errorCode(res: ServerResponse, code: number, message: string): void {
+        res.writeHead(code);
+        res.write(message);
+        res.end();
+    }
+
+    private static errorCode403(res: ServerResponse): void {
+        HttpApp.errorCode(res, 403, "Forbidden!");
+    }
+
+    private static errorCode404(res: ServerResponse): void {
+        HttpApp.errorCode(res, 404, "Not Found!");
+    }
+
     private static responseDirectoryHtml(res: ServerResponse, topFileName: string, topPathName: string): void {
         // 返回目录
         res.setHeader('content-type', 'text/html; charset=utf-8');
@@ -260,6 +273,19 @@ export class HttpApp {
         res.end();
     }
 
+    private static responseFile(res: ServerResponse, topFileName: string): void {
+        const extName = path.extname(topFileName).toLowerCase();
+        res.setHeader('content-type', HttpApp.getMimeType(extName));
+        res.write(fs.readFileSync(topFileName, { flag: 'r' }));
+        res.end();
+    }
+
+    private static redirectLocalPath(res: ServerResponse, localPath: string): void {
+        res.setHeader("location", localPath);
+        res.writeHead(302);
+        res.end();
+    }
+
     public onFiles(prefixPath: string, dirPath: string, isListDir?: boolean, indexHtmlNames?: Array<string>): void {
         prefixPath = prefixPath.endsWith('/') ? prefixPath.substr(0, prefixPath.length - 1) : prefixPath;
         isListDir = isListDir || false;
@@ -283,37 +309,28 @@ export class HttpApp {
                             const fileName = path.join(topFileName, indexName);
                             if (fs.existsSync(fileName)) {
                                 // 重定向到默认文件
-                                res.setHeader("location", `${topPathName}/${indexName}`);
-                                res.writeHead(302);
-                                res.end();
-                                resolve();
-                                return;
+                                HttpApp.redirectLocalPath(res, `${topPathName}/${indexName}`);
+                                resolve(); return;
                             }
                         }
                         if (isListDir) {
                             // 返回目录
                             HttpApp.responseDirectoryHtml(res, topFileName, topPathName);
-                            resolve();
+                            resolve(); return;
                         } else {
                             // 拒绝访问目录
-                            res.writeHead(403);
-                            res.write("Forbidden!");
-                            res.end();
-                            resolve();
+                            HttpApp.errorCode403(res);
+                            resolve(); return;
                         }
                     } else {
                         // 返回文件
-                        res.setHeader('content-type', HttpApp.getMimeType(topFileName));
-                        res.write(fs.readFileSync(topFileName, { flag: 'r' }));
-                        res.end();
-                        resolve();
+                        HttpApp.responseFile(res, topFileName);
+                        resolve(); return;
                     }
                 } catch (err) {
                     // 文件不存在
-                    res.writeHead(404);
-                    res.write("Not Found!");
-                    res.end();
-                    resolve();
+                    HttpApp.errorCode404(res);
+                    resolve(); return;
                 }
             })
         });
