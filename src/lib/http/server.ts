@@ -111,6 +111,7 @@ export class HttpApp {
             case '.txt':
             case '.text':
             case '.md':
+            case '.sql':
                 return 'text/plain; charset=utf-8';
             case '.ttf':
                 return 'font/ttf';
@@ -147,6 +148,19 @@ export class HttpApp {
             default:
                 return 'application/octet-stream';
         }
+    }
+
+    // 同步
+    public static formatFileSize(fileSize: number): string {
+        const UNIT = ["B", "K", "M", "G", "T", "P"];
+        const UNIT_SIZE = UNIT.length;
+        const UNIT_STEP = 1024;
+        let unitIndex = 0;
+        while (fileSize >= UNIT_STEP && unitIndex < UNIT_SIZE - 1) {
+            unitIndex++;
+            fileSize /= UNIT_STEP;
+        }
+        return `${fileSize.toFixed(2)}${UNIT[unitIndex]}`;
     }
 
     public on(pathname: HttpPathMatcher | [HttpMethodType, HttpPathMatcher], event: HttpRequestEvent): void {
@@ -191,7 +205,7 @@ export class HttpApp {
         this.m_interfaces.push(item);
     }
 
-    public onFile(prefix: string, dirpath: string): void {
+    public onFiles(prefix: string, dirpath: string): void {
         // prefix
         prefix = prefix.endsWith('/') ? prefix.substr(0, prefix.length - 1) : prefix;
         // interface
@@ -199,33 +213,49 @@ export class HttpApp {
             method: 'GET',
             pathname: new RegExp(`^${prefix}($|/.*$)`),
             event: (match, req, res) => new Promise<void | string | HttpEasyResponse>((resolve, rejects) => {
-                const aliasName = decodeURI(match[1].endsWith('/') ? match[1].substr(0, match[1].length - 1) : match[1]);
+                const topAliasName = decodeURI(match[1].endsWith('/') ? match[1].substr(0, match[1].length - 1) : match[1]);
+                const topPathName = `${prefix}${topAliasName}`;
                 try {
                     // 获取文件名、判断是否存在
-                    const topFileName = path.join(dirpath, aliasName);
+                    const topFileName = path.join(dirpath, topAliasName);
                     const topFileState = fs.statSync(topFileName);
                     if (topFileState.isDirectory()) {
                         // 返回目录
                         res.setHeader('content-type', 'text/html; charset=utf-8');
                         const fileNames = fs.readdirSync(topFileName);
-                        res.write('<style>body{font-size:150%;color:grey;background-color:black}a{text-decoration:none}a:link{color:pink}a:visited{color:hotpink}</style>');
-                        res.write(`<h2>${prefix}${aliasName}</h2>`);
-                        res.write('<table>');
+                        // Head
+                        res.write('<head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"><style>');
+                        res.write('body{font-size:150%;font-family:serif;color:#999999;background-color:#333333}');
+                        res.write('table{width:100%}tr{margin-top:8px}');
+                        res.write('a{text-decoration:none}a:link{color:pink}a:visited{color:hotpink}');
+                        res.write('.main{margin-left:6%;margin-right:6%}');
+                        res.write('</style></head>\n');
+                        // Body
+                        res.write(`<body><div class='main'><h2>${0 === topPathName.length ? '/' : topPathName}</h2><table>`);
                         // 返回上级
-                        res.write(`<tr><td></td><td><a href='${prefix}${aliasName}/..'>../</a></td><td>Size</td><td>LastModify</td></tr>\n`);
+                        res.write(`<thead><tr>`);
+                        res.write(`<td>□</td>`);
+                        res.write(`<td><a href='${topPathName}/..'>..</a></td>`);
+                        res.write(`<td>文件大小</td>`);
+                        res.write(`<td>创建时间</td>`);
+                        res.write(`<td>最近修改</td>`);
+                        res.write(`</tr></thead><tbody>\n`);
                         for (let name of fileNames) {
-                            const fileName = path.join(topFileName, name);
-                            let fileStat;
-                            let realName;
-                            let showName;
+                            if (name.startsWith('$') || name.startsWith('.')) continue;
                             try {
-                                fileStat = fs.statSync(fileName);
-                                realName = `${prefix}${aliasName}/${name}`;
-                                showName = path.basename(`${aliasName}/${name}`);
-                                res.write(`<tr><td>${fileStat.isDirectory() ? '○' : '●'}</td><td><a href='${realName}'>${showName}</a></td><td>${fileStat.size}</td><td>${fileStat.mtime.toLocaleString()}</td></tr>\n`);
-                            } catch (err) { }
+                                const fileName = path.join(topFileName, name);
+                                const pathName = `${topPathName}/${name}`;
+                                const fileStat = fs.statSync(fileName);
+                                res.write(`<tr>`);
+                                res.write(`<td>${fileStat.isDirectory() ? '□' : '■'}</td>`);
+                                res.write(`<td><a href='${pathName}'>${name}</a></td>`);
+                                res.write(`<td>${fileStat.isDirectory() ? '' : HttpApp.formatFileSize(fileStat.size)}</td>`);
+                                res.write(`<td>${fileStat.ctime.toLocaleString()}</td>`);
+                                res.write(`<td>${fileStat.mtime.toLocaleString()}</td>`);
+                                res.write(`</tr>\n`);
+                            } catch (err) { continue; }
                         }
-                        res.write('</table>');
+                        res.write('</tbody></table></div></body>');
                         res.end();
                         resolve();
                     } else {
