@@ -1,14 +1,14 @@
 {
     "host": "localhost",
-    "port": 9999,
+    "port": 8899,
     "on": [
         {
             "dir": "E:/",
             "prefix": "/e"
         },
         {
-            "dir": "F:/",
-            "prefix": "/f"
+            "dir": "G:/www/",
+            "prefix": "/www"
         }
     ]
 }

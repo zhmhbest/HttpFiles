@@ -205,59 +205,102 @@ export class HttpApp {
         this.m_interfaces.push(item);
     }
 
-    public onFiles(prefix: string, dirpath: string): void {
-        // prefix
-        prefix = prefix.endsWith('/') ? prefix.substr(0, prefix.length - 1) : prefix;
+    // 同步
+    private static responseDirectoryHtml(res: ServerResponse, topFileName: string, topPathName: string): void {
+        // 返回目录
+        res.setHeader('content-type', 'text/html; charset=utf-8');
+        const fileNames = fs.readdirSync(topFileName);
+        res.write('<html>');
+        // ----------------------------------------------------------------
+        // Head
+        res.write(`
+<head><style>
+    body{font-size:150%;font-family:serif;color:#999999;background-color:#333333}
+    table{width:100%}tr{margin-top:8px}tr:hover{background-color: black}
+    a{text-decoration:none}a:link{color:pink}a:visited{color:hotpink}
+    .main{margin-left:6%;margin-right:6%}
+</style></head>`.trimLeft());
+        // ----------------------------------------------------------------
+        // Body
+        res.write(`
+<body><div class='main'>
+    <h2>${0 === topPathName.length ? '/' : topPathName}</h2>
+    <table>
+        <thead><tr>
+                <td>□</td>
+                <td><a href='${topPathName}/..'>..</a></td>
+                <td>文件大小</td>
+                <td>创建时间</td>
+                <td>修改时间</td>
+        </tr></thead>
+<tbody>`.trimLeft());
+        // --------------------------------
+        for (let name of fileNames) {
+            if (name.startsWith('$') || name.startsWith('.')) continue;
+            try {
+                const fileName = path.join(topFileName, name);
+                const pathName = `${topPathName}/${name}`;
+                const fileStat = fs.statSync(fileName);
+                res.write(`<tr>`);
+                res.write(`<td>${fileStat.isDirectory() ? '□' : '■'}</td>`);
+                res.write(`<td><a href='${pathName}'>${name}</a></td>`);
+                res.write(`<td>${fileStat.isDirectory() ? '' : HttpApp.formatFileSize(fileStat.size)}</td>`);
+                res.write(`<td>${fileStat.isDirectory() ? '' : fileStat.ctime.toLocaleString()}</td>`);
+                res.write(`<td>${fileStat.isDirectory() ? '' : fileStat.mtime.toLocaleString()}</td>`);
+                res.write(`</tr>\n`);
+            } catch (err) { continue; }
+        }
+        // --------------------------------
+        res.write(`
+</tbody>
+    </table>
+</div></body>`.trimLeft());
+        // ----------------------------------------------------------------
+        res.write('</html>');
+        res.end();
+    }
+
+    public onFiles(prefixPath: string, dirPath: string, isListDir?: boolean, indexHtmlNames?: Array<string>): void {
+        prefixPath = prefixPath.endsWith('/') ? prefixPath.substr(0, prefixPath.length - 1) : prefixPath;
+        isListDir = isListDir || false;
+        const defaultHtmlNames = ['index.html', 'index.htm'];
+
         // interface
         this.m_interfaces.push({
             method: 'GET',
-            pathname: new RegExp(`^${prefix}($|/.*$)`),
+            pathname: new RegExp(`^${prefixPath}($|/.*$)`),
             event: (match, req, res) => new Promise<void | string | HttpEasyResponse>((resolve, rejects) => {
+                // 路径
                 const topAliasName = decodeURI(match[1].endsWith('/') ? match[1].substr(0, match[1].length - 1) : match[1]);
-                const topPathName = `${prefix}${topAliasName}`;
+                const topPathName = `${prefixPath}${topAliasName}`;
                 try {
                     // 获取文件名、判断是否存在
-                    const topFileName = path.join(dirpath, topAliasName);
+                    const topFileName = path.join(dirPath, topAliasName);
                     const topFileState = fs.statSync(topFileName);
                     if (topFileState.isDirectory()) {
-                        // 返回目录
-                        res.setHeader('content-type', 'text/html; charset=utf-8');
-                        const fileNames = fs.readdirSync(topFileName);
-                        // Head
-                        res.write('<head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"><style>');
-                        res.write('body{font-size:150%;font-family:serif;color:#999999;background-color:#333333}');
-                        res.write('table{width:100%}tr{margin-top:8px}tr:hover{background-color: black}');
-                        res.write('a{text-decoration:none}a:link{color:pink}a:visited{color:hotpink}');
-                        res.write('.main{margin-left:6%;margin-right:6%}');
-                        res.write('</style></head>\n');
-                        // Body
-                        res.write(`<body><div class='main'><h2>${0 === topPathName.length ? '/' : topPathName}</h2><table>`);
-                        // 返回上级
-                        res.write(`<thead><tr>`);
-                        res.write(`<td>□</td>`);
-                        res.write(`<td><a href='${topPathName}/..'>..</a></td>`);
-                        res.write(`<td>文件大小</td>`);
-                        res.write(`<td>创建时间</td>`);
-                        res.write(`<td>最近修改</td>`);
-                        res.write(`</tr></thead><tbody>\n`);
-                        for (let name of fileNames) {
-                            if (name.startsWith('$') || name.startsWith('.')) continue;
-                            try {
-                                const fileName = path.join(topFileName, name);
-                                const pathName = `${topPathName}/${name}`;
-                                const fileStat = fs.statSync(fileName);
-                                res.write(`<tr>`);
-                                res.write(`<td>${fileStat.isDirectory() ? '□' : '■'}</td>`);
-                                res.write(`<td><a href='${pathName}'>${name}</a></td>`);
-                                res.write(`<td>${fileStat.isDirectory() ? '' : HttpApp.formatFileSize(fileStat.size)}</td>`);
-                                res.write(`<td>${fileStat.isDirectory() ? '' : fileStat.ctime.toLocaleString()}</td>`);
-                                res.write(`<td>${fileStat.isDirectory() ? '' : fileStat.mtime.toLocaleString()}</td>`);
-                                res.write(`</tr>\n`);
-                            } catch (err) { continue; }
+                        // 探测 index.html | index.htm
+                        for (let indexName of (indexHtmlNames || defaultHtmlNames)) {
+                            const fileName = path.join(topFileName, indexName);
+                            if (fs.existsSync(fileName)) {
+                                // 重定向到默认文件
+                                res.setHeader("location", `${topPathName}/${indexName}`);
+                                res.writeHead(302);
+                                res.end();
+                                resolve();
+                                return;
+                            }
                         }
-                        res.write('</tbody></table></div></body>');
-                        res.end();
-                        resolve();
+                        if (isListDir) {
+                            // 返回目录
+                            HttpApp.responseDirectoryHtml(res, topFileName, topPathName);
+                            resolve();
+                        } else {
+                            // 拒绝访问目录
+                            res.writeHead(403);
+                            res.write("Forbidden!");
+                            res.end();
+                            resolve();
+                        }
                     } else {
                         // 返回文件
                         res.setHeader('content-type', HttpApp.getMimeType(topFileName));
@@ -266,6 +309,7 @@ export class HttpApp {
                         resolve();
                     }
                 } catch (err) {
+                    // 文件不存在
                     res.writeHead(404);
                     res.write("Not Found!");
                     res.end();

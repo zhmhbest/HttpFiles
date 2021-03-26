@@ -10,6 +10,6 @@ interface AppConfig {
 const config = readJSON("./config.json") as AppConfig;
 const app = new HttpApp(config.port, config.host);
 for (const it of config.on) {
-    app.onFiles(it.prefix, it.dir);
+    app.onFiles(it.prefix, it.dir, true);
 }
 app.listen();
