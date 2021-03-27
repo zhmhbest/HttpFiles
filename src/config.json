@@ -3,11 +3,11 @@
     "port": 8899,
     "on": [
         {
-            "dir": "E:/",
-            "prefix": "/e"
+            "dir": "D:/Users/zhmhb/Downloads",
+            "prefix": "/downloads"
         },
         {
-            "dir": "G:/www/",
+            "dir": "E:/www/",
             "prefix": "/www"
         }
     ]

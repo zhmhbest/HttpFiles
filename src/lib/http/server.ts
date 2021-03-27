@@ -220,6 +220,7 @@ export class HttpApp {
         HttpApp.errorCode(res, 404, "Not Found!");
     }
 
+    // 同步
     private static responseDirectoryHtml(res: ServerResponse, topFileName: string, topPathName: string): void {
         // 返回目录
         res.setHeader('content-type', 'text/html; charset=utf-8');
@@ -274,11 +275,23 @@ export class HttpApp {
         res.end();
     }
 
-    private static responseFile(res: ServerResponse, topFileName: string): void {
-        const extName = path.extname(topFileName).toLowerCase();
-        res.setHeader('content-type', HttpApp.getMimeType(extName));
-        res.write(fs.readFileSync(topFileName, { flag: 'r' }));
-        res.end();
+    // 异步
+    private static responseFile(res: ServerResponse, filestat: fs.Stats, filename: string) {
+        return new Promise<void>((resolve, rejects) => {
+            const extName = path.extname(filename).toLowerCase();
+            res.setHeader('Content-Type', HttpApp.getMimeType(extName));
+            res.setHeader('Content-Length', filestat.size);
+            const rs = fs.createReadStream(filename, {flags: 'r', autoClose: true});
+            // rs.pipe(res);
+            rs.on('data', (chunk: Buffer) => {
+                // console.log(chunk.length); // 65536
+                res.write(chunk);
+            });
+            rs.on('end', () => {
+                res.end();
+                resolve();
+            });
+        });
     }
 
     private static redirectLocalPath(res: ServerResponse, localPath: string): void {
@@ -329,8 +342,9 @@ export class HttpApp {
                         }
                     } else {
                         // 返回文件
-                        HttpApp.responseFile(res, topFileName);
-                        resolve(); return;
+                        HttpApp.responseFile(res, topFileState, topFileName).then(() => {
+                            resolve(); return;
+                        });
                     }
                 } catch (err) {
                     // 文件不存在
@@ -354,7 +368,7 @@ export class HttpApp {
                 request({
                     url: url,
                     method: req.method,
-                    headers: {...req.headers, host: `${url.host}`},
+                    headers: { ...req.headers, host: `${url.host}` },
                     body: req,
                     waitHeader: (status: number, headers: IncomingHttpHeaders) => {
                         res.writeHead(status, headers);
