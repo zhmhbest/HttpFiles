@@ -381,15 +381,24 @@ export class HttpApp {
         });
     }
 
-    public onMapping(prefixPath: string, realPrefixPath: string): void {
+    public onMapping(
+        prefixPath: string,
+        realPrefixPath: string,
+        captureSubPath?: (sub: string) => string | void,
+        captureChunk?: (chunk: Buffer | null) => void
+    ): void {
         prefixPath = HttpApp.getPurePath(prefixPath);
         realPrefixPath = HttpApp.getPurePath(realPrefixPath);
+        //
+        const _captureSubPath = captureSubPath || (sub => {});
+        const _captureChunk = captureChunk || (chunk => {});
+        //
         this.m_interfaces.push({
             method: undefined,
             pathname: new RegExp(`^${prefixPath}($|/.*$)`),
             event: (match, req, res) => new Promise<void | string | HttpEasyResponse>((resolve, rejects) => {
-                const aliasName = decodeURI(match[1]);
-                const realPath = `${realPrefixPath}${aliasName}`;
+                const subPath = decodeURI(match[1]);
+                const realPath = _captureSubPath(subPath) || `${realPrefixPath}${subPath}`;
                 const url = new URL(realPath);
                 request({
                     url: url,
@@ -401,9 +410,11 @@ export class HttpApp {
                     },
                     waitChunk: (chunk: Buffer) => {
                         res.write(chunk);
+                        _captureChunk(chunk);
                     }
                 }).then(r => {
                     res.end();
+                    _captureChunk(null);
                     resolve();
                 });
             })
