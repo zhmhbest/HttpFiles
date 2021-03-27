@@ -276,12 +276,36 @@ export class HttpApp {
     }
 
     // 异步
-    private static responseFile(res: ServerResponse, filestat: fs.Stats, filename: string) {
+    private static responseFile(res: ServerResponse, filestat: fs.Stats, filename: string, filerange?: string) {
+        // 扩展名
+        const extName = path.extname(filename).toLowerCase();
+        // 断点续传
+        let range: { start: number, end: number, size: number } = {
+            start: 0,
+            end: filestat.size - 1,
+            size: filestat.size
+        };
+        if (undefined !== filerange) {
+            const rangeMatcher = /bytes (?<L>\*|(?<start>\d+)-(?<end>\d+))(?<R>\/(?<size>\*|\d+))?/;
+            const match = filerange.match(rangeMatcher);
+            if (null !== match) {
+                const groups = match.groups as { start?: string, end?: string, size?: string };
+                if (groups.start) range.start = parseInt(groups.start);
+                if (groups.end) range.end = parseInt(groups.end);
+                if (groups.size) range.size = parseInt(groups.size);
+            }
+        };
         return new Promise<void>((resolve, rejects) => {
-            const extName = path.extname(filename).toLowerCase();
+            // Head
             res.setHeader('Content-Type', HttpApp.getMimeType(extName));
-            res.setHeader('Content-Length', filestat.size);
-            const rs = fs.createReadStream(filename, {flags: 'r', autoClose: true});
+            res.setHeader('Content-Length', (range.end - range.start + 1));
+            // Body
+            const rs = fs.createReadStream(filename, {
+                flags: 'r',
+                autoClose: true,
+                start: range.start,
+                end: range.end
+            });
             // rs.pipe(res);
             rs.on('data', (chunk: Buffer) => {
                 // console.log(chunk.length); // 65536
@@ -342,7 +366,9 @@ export class HttpApp {
                         }
                     } else {
                         // 返回文件
-                        HttpApp.responseFile(res, topFileState, topFileName).then(() => {
+                        HttpApp.responseFile(res, topFileState, topFileName, req.headers['content-range']).then(() => {
+                            resolve(); return;
+                        }).catch(err => {
                             resolve(); return;
                         });
                     }
