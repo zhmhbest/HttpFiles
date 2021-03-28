@@ -6,17 +6,19 @@ interface AppConfig {
     port: number,
     on: Array<{dir: string,  prefix: string,}>
 }
-
 const config = readJSON("./config.json") as AppConfig;
 const app = new HttpApp(config.port, config.host);
-
+app.on(/^\/$/, async (match, req, res) => {
+    res.write('Hi!');
+    res.end();
+});
 app.onMapping("/maven2", "https://repo1.maven.org/maven2", subPath => {
-    if(!subPath.endsWith('/')) {
+    if(0 === subPath.length || subPath.endsWith('/')) {
+        return undefined;
+    } else {
         return `https://maven.aliyun.com/repository/central${subPath}`;
     }
-    return undefined;
 });
-
 for (const it of config.on) {
     app.onFiles(it.prefix, it.dir, true);
 }
