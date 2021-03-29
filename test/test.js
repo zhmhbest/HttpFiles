@@ -1,1 +1,0 @@
-console.log("123".substr(1))

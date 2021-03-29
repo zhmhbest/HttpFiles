@@ -9,6 +9,10 @@
         {
             "dir": "E:/www/",
             "prefix": "/www"
+        },
+        {
+            "dir": "D:/ProgramFiles/Nginx/nginx-1.18.0/html/bookmark",
+            "prefix": "/bookmark"
         }
     ]
 }

@@ -339,7 +339,9 @@ export class HttpApp {
             pathname: new RegExp(`^${prefixPath}($|/.*$)`),
             event: (match, req, res) => new Promise<void | string | HttpEasyResponse>((resolve, rejects) => {
                 // 路径
-                const topAliasName = decodeURI(HttpApp.getPurePath(match[1]));
+                const topAliasFullName = decodeURI(HttpApp.getPurePath(match[1]));
+                let fullNameMatcheArray = topAliasFullName.match(/^(.*?)(\?|$)/);
+                const topAliasName = fullNameMatcheArray ? fullNameMatcheArray[1] : topAliasFullName;
                 const topPathName = `${prefixPath}${topAliasName}`;
                 try {
                     // 获取文件名、判断是否存在
