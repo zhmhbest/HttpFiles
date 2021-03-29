@@ -383,23 +383,32 @@ export class HttpApp {
 
     public onMapping(
         prefixPath: string,
-        realPrefixPath: string,
-        captureSubPath?: (sub: string) => string | void,
+        capturePath: string | ((sub: string) => string | ((res: ServerResponse) => void)),
         captureChunk?: (chunk: Buffer | null) => void
     ): void {
         prefixPath = HttpApp.getPurePath(prefixPath);
-        realPrefixPath = HttpApp.getPurePath(realPrefixPath);
-        //
-        const _captureSubPath = captureSubPath || (sub => {});
-        const _captureChunk = captureChunk || (chunk => {});
         //
         this.m_interfaces.push({
             method: undefined,
             pathname: new RegExp(`^${prefixPath}($|/.*$)`),
             event: (match, req, res) => new Promise<void | string | HttpEasyResponse>((resolve, rejects) => {
-                const subPath = decodeURI(match[1]);
-                const realPath = _captureSubPath(subPath) || `${realPrefixPath}${subPath}`;
-                const url = new URL(realPath);
+                let finalPath: string;
+                if (typeof capturePath === 'string') {
+                    finalPath = `${capturePath}${decodeURI(match[1])}`;
+                } else {
+                    const captured = capturePath(decodeURI(match[1]));
+                    if (typeof captured === 'string') {
+                        finalPath = captured;
+                    } else if (captured instanceof Function) {
+                        captured(res);
+                        resolve(); return;
+                    } else {
+                        HttpApp.errorCode404(res);
+                        resolve(); return;
+                    }
+                }
+                // 代理请求
+                const url = new URL(finalPath);
                 request({
                     url: url,
                     method: req.method,
@@ -410,11 +419,11 @@ export class HttpApp {
                     },
                     waitChunk: (chunk: Buffer) => {
                         res.write(chunk);
-                        _captureChunk(chunk);
+                        if (captureChunk) captureChunk(chunk);
                     }
                 }).then(r => {
                     res.end();
-                    _captureChunk(null);
+                    if (captureChunk) captureChunk(null);
                     resolve();
                 });
             })

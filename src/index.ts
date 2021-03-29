@@ -12,9 +12,11 @@ const app = new HttpApp(config.port, config.host);
 //     res.write('Hi!');
 //     res.end();
 // });
-app.onMapping("/maven2", "https://repo1.maven.org/maven2", subPath => {
+app.onMapping("/baidu", "https://www.baidu.com");
+app.onMapping("/bing", subPath => `https://cn.bing.com/search?q=${subPath.substr(1)}`);
+app.onMapping("/maven2", subPath => {
     if(0 === subPath.length || subPath.endsWith('/')) {
-        return undefined;
+        return `https://repo1.maven.org/maven2${subPath}`;
     } else {
         return `https://maven.aliyun.com/repository/central${subPath}`;
     }
