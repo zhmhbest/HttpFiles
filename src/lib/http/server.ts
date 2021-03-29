@@ -401,7 +401,7 @@ export class HttpApp {
     public onFiles(prefixPath: string, dirPath: string, isListDir?: boolean, indexHtmlNames?: Array<string>): void {
         prefixPath = HttpApp.getPurePath(prefixPath);
         isListDir = isListDir || false;
-        const defaultHtmlNames = ['index.html', 'index.htm'];
+        const defaultHtmlNames = ['index.html', 'index.htm', 'docs/index.html'];
 
         // interface
         this.m_interfaces.push({
