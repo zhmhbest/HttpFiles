@@ -3,12 +3,12 @@
     "port": 8899,
     "on": [
         {
-            "dir": "D:/Users/zhmhb/Downloads",
-            "prefix": "/downloads"
+            "dir": "D:/",
+            "prefix": "/d"
         },
         {
-            "dir": "E:/www/",
-            "prefix": "/www"
+            "dir": "E:/",
+            "prefix": "/e"
         },
         {
             "dir": "D:/ProgramFiles/Nginx/nginx-1.18.0/html/bookmark",

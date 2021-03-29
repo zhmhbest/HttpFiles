@@ -38,6 +38,12 @@ interface HttpRequestInterface {
     event: HttpRequestEvent
 }
 
+interface HttpFileRange {
+    start: number,
+    end: number,
+    size: number
+}
+
 export class HttpApp {
     protected m_port: number;
     protected m_host: string | undefined;
@@ -275,46 +281,110 @@ export class HttpApp {
         res.end();
     }
 
-    // 异步
-    private static responseFile(res: ServerResponse, filestat: fs.Stats, filename: string, filerange?: string) {
-        // 扩展名
-        const extName = path.extname(filename).toLowerCase();
-        // 断点续传
-        let range: { start: number, end: number, size: number } = {
+    // 同步
+    private static getFileRange(filestat: fs.Stats, filerange?: string): HttpFileRange {
+        let range: HttpFileRange = {
             start: 0,
             end: filestat.size - 1,
             size: filestat.size
         };
-        if (undefined !== filerange) {
+        if (filerange) {
             const rangeMatcher = /bytes (?<L>\*|(?<start>\d+)-(?<end>\d+))(?<R>\/(?<size>\*|\d+))?/;
             const match = filerange.match(rangeMatcher);
-            if (null !== match) {
+            if (match) {
                 const groups = match.groups as { start?: string, end?: string, size?: string };
                 if (groups.start) range.start = parseInt(groups.start);
                 if (groups.end) range.end = parseInt(groups.end);
                 if (groups.size) range.size = parseInt(groups.size);
             }
-        };
+        }
+        return range;
+    }
+
+    // 异步
+    private static responseFile(res: ServerResponse, filename: string, filestat: fs.Stats, filerange?: string) {
+        // 扩展名
+        const extName = path.extname(filename).toLowerCase();
         return new Promise<void>((resolve, rejects) => {
-            // Head
-            res.setHeader('Content-Type', HttpApp.getMimeType(extName));
-            res.setHeader('Content-Length', (range.end - range.start + 1));
-            // Body
-            const rs = fs.createReadStream(filename, {
-                flags: 'r',
-                autoClose: true,
-                start: range.start,
-                end: range.end
-            });
-            // rs.pipe(res);
-            rs.on('data', (chunk: Buffer) => {
-                // console.log(chunk.length); // 65536
-                res.write(chunk);
-            });
-            rs.on('end', () => {
-                res.end();
-                resolve();
-            });
+            switch (extName) {
+                // https://www.bootcdn.cn/prism/
+                case '.md':
+                case '.sh':
+                case '.bat':
+                case '.cmd':
+                case '.py':
+                case '.vbs':
+                case '.ts':
+                case '.java':
+                case '.sql':
+                case '.ini':
+                case '.properties':
+                    const getPrismName = (extName: string) => {
+                        switch (extName) {
+                            case '.ts':
+                                return 'typescript';
+                            case '.py':
+                                return 'python';
+                            case '.bat':
+                            case '.cmd':
+                                return 'batch';
+                            case '.sh':
+                                return 'bash';
+                            case '.vbs':
+                                return 'visual-basic';
+                            case '.md':
+                                return 'markdown';
+                            default:
+                                return extName.substr(1);
+                        }
+                    };
+                    const prismName = getPrismName(extName);
+                    const text = fs.readFileSync(filename);
+                    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+                    // res.setHeader('Content-Length', text.byteLength);
+                    res.write('<html>');
+                    res.write('<head>');
+                    res.write('<script src="https://cdn.bootcss.com/jquery/1.11.0/jquery.min.js"></script>');
+                    // 基本功能
+                    res.write('<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/prism.min.js"></script>');
+                    res.write('<link href="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/themes/prism-tomorrow.min.css" rel="stylesheet">');
+                    res.write(`<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/components/prism-${prismName}.min.js"></script>`);
+                    // 扩展功能
+                    res.write('<link href="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet">');
+                    res.write('<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/line-numbers/prism-line-numbers.min.js"></script>');
+                    res.write('<style>body{background-color:#333333;width:80%;margin-left:10%;margin-right:10%;}.main{}</style>');
+                    res.write('</head>');
+                    res.write('<body><div class="main">');
+                    res.write(`<pre class="line-numbers"><code class="language-${prismName}">`);
+                    fs.createReadStream(filename, { flags: 'r', autoClose: true }).on('data', (chunk: Buffer) => {
+                        res.write(chunk);
+                    }).on('close', () => {
+                        res.write('</code></pre>');
+                        res.write('</div></body>');
+                        res.write('</html>');
+                        res.end();
+                        resolve();
+                    });
+                    break;
+                default:
+                    const range = HttpApp.getFileRange(filestat, filerange);
+                    // Head
+                    res.setHeader('Content-Type', HttpApp.getMimeType(extName));
+                    res.setHeader('Content-Length', (range.end - range.start + 1));
+                    // Body
+                    fs.createReadStream(filename, {
+                        flags: 'r',
+                        autoClose: true,
+                        start: range.start,
+                        end: range.end
+                    }).on('data', (chunk: Buffer) => {
+                        // console.log(chunk.length); // 65536
+                        res.write(chunk);
+                    }).on('end', () => {
+                        res.end();
+                        resolve();
+                    });
+            }
         });
     }
 
@@ -368,7 +438,7 @@ export class HttpApp {
                         }
                     } else {
                         // 返回文件
-                        HttpApp.responseFile(res, topFileState, topFileName, req.headers['content-range']).then(() => {
+                        HttpApp.responseFile(res, topFileName, topFileState, req.headers['content-range']).then(() => {
                             resolve(); return;
                         }).catch(err => {
                             resolve(); return;
