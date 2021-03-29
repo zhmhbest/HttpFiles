@@ -40,12 +40,12 @@ interface HttpRequestInterface {
 
 export class HttpApp {
     protected m_port: number;
-    protected m_host: string;
+    protected m_host: string | undefined;
     protected m_server: Server | null;
     protected m_interfaces: Array<HttpRequestInterface>;
     public constructor(port?: number, host?: string) {
         this.m_port = port || 8899;
-        this.m_host = host || "127.0.0.1";
+        this.m_host = host || undefined;
         this.m_server = null;
         this.m_interfaces = [];
     }
@@ -485,7 +485,7 @@ export class HttpApp {
             for (let item of this.m_interfaces) {
                 console.log(`- ${undefined === item.method ? '*' : item.method} ${item.pathname}`);
             }
-            console.log(`Web Server started at http://${this.m_host}:${this.m_port}`);
+            console.log(`Web Server started at http://${this.m_host ? this.m_host : '127.0.0.1'}:${this.m_port}`);
         });
     }
 };
