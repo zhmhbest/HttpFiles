@@ -315,9 +315,14 @@ export class HttpApp {
                 case '.py':
                 case '.vbs':
                 case '.ts':
+                case '.h':
+                case '.c':
+                case '.cmake':
                 case '.java':
                 case '.sql':
                 case '.ini':
+                case '.iml':
+                case '.yaml':
                 case '.properties':
                     const getPrismName = (extName: string) => {
                         switch (extName) {
@@ -334,37 +339,48 @@ export class HttpApp {
                                 return 'visual-basic';
                             case '.md':
                                 return 'markdown';
+                            case '.c':
+                            case '.h':
+                                return 'c';
                             default:
                                 return extName.substr(1);
                         }
                     };
                     const prismName = getPrismName(extName);
-                    const text = fs.readFileSync(filename);
                     res.setHeader('Content-Type', 'text/html; charset=utf-8');
                     // res.setHeader('Content-Length', text.byteLength);
                     res.write('<html>');
                     res.write('<head>');
                     res.write('<script src="https://cdn.bootcss.com/jquery/1.11.0/jquery.min.js"></script>');
+                    res.write('<style>body{background-color:#333333;width:80%;margin-left:10%;margin-right:10%;}.main{}</style>');
+                    res.write('</head>');
+                    res.write('<body>');
+                    // Code
+                    res.write('<div class="main">');
+                    const text = fs.readFileSync(filename).toString().replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    // console.log(text);
+                    res.write(`<pre class="line-numbers"><code class="match-braces language-${prismName}">${text}</code></pre>`);
+                    res.write('</div>');
                     // 基本功能
                     res.write('<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/prism.min.js"></script>');
                     res.write('<link href="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/themes/prism-tomorrow.min.css" rel="stylesheet">');
                     res.write(`<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/components/prism-${prismName}.min.js"></script>`);
-                    // 扩展功能
+                    // 扩展功能-行号
                     res.write('<link href="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet">');
                     res.write('<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/line-numbers/prism-line-numbers.min.js"></script>');
-                    res.write('<style>body{background-color:#333333;width:80%;margin-left:10%;margin-right:10%;}.main{}</style>');
-                    res.write('</head>');
-                    res.write('<body><div class="main">');
-                    res.write(`<pre class="line-numbers"><code class="language-${prismName}">`);
-                    fs.createReadStream(filename, { flags: 'r', autoClose: true }).on('data', (chunk: Buffer) => {
-                        res.write(chunk);
-                    }).on('close', () => {
-                        res.write('</code></pre>');
-                        res.write('</div></body>');
-                        res.write('</html>');
-                        res.end();
-                        resolve();
-                    });
+                    // 扩展功能-匹配括号
+                    res.write('<link href="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/match-braces/prism-match-braces.min.css" rel="stylesheet">');
+                    res.write('<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/match-braces/prism-match-braces.min.js"></script>');
+                    // // 扩展功能-Toolbar
+                    // res.write('<link href="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/toolbar/prism-toolbar.min.css" rel="stylesheet">');
+                    // res.write('<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/toolbar/prism-toolbar.min.js"></script>');
+                    // // 扩展功能-TreeView
+                    // res.write('<link href="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/treeview/prism-treeview.min.css" rel="stylesheet">');
+                    // res.write('<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/treeview/prism-treeview.min.js"></script>');
+                    res.write('</body>');
+                    res.write('</html>');
+                    res.end();
+                    resolve();
                     break;
                 default:
                     const range = HttpApp.getFileRange(filestat, filerange);
