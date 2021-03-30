@@ -311,6 +311,7 @@ export class HttpApp {
         prismMap.set('sh', "bash");
         prismMap.set('vbs', "visual-basic");
         prismMap.set('h', "c");
+        prismMap.set('ts', "typescript");
         prismMap.set('csv', undefined);
         prismMap.set('iml', undefined);
         // 扩展名
