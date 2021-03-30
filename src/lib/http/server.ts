@@ -108,48 +108,48 @@ export class HttpApp {
     public static getMimeType(extName: string): string {
         switch (extName) {
             // html+css+js
-            case '.htm':
-            case '.html':
+            case 'htm':
+            case 'html':
                 return 'text/html; charset=utf-8';
-            case '.js':
+            case 'js':
                 return 'text/javascript; charset=utf-8';
-            case '.css':
+            case 'css':
                 return 'text/css; charset=utf-8';
             // 文本
-            case '.txt':
-            case '.text':
+            case 'txt':
+            case 'text':
                 return 'text/plain; charset=utf-8';
             // 字体
-            case '.ttf':
+            case 'ttf':
                 return 'font/ttf';
             // 数据
-            case '.json':
+            case 'json':
                 return 'application/json';
-            case '.xml':
+            case 'xml':
                 return 'application/xml';
-            case '.csv':
+            case 'csv':
                 return 'application/csv';
             // 图片
-            case '.ico':
+            case 'ico':
                 return 'image/x-icon';
-            case '.jpg':
-            case '.jpeg':
+            case 'jpg':
+            case 'jpeg':
                 return 'image/jpeg';
-            case '.png':
+            case 'png':
                 return 'image/png';
-            case '.bmp':
+            case 'bmp':
                 return 'image/bmp';
-            case '.gif':
+            case 'gif':
                 return 'image/gif';
-            case '.svg':
+            case 'svg':
                 return 'image/svg+xml';
             // 媒体
-            case '.mp3':
+            case 'mp3':
                 return 'audio/mpeg';
-            case '.mid':
-            case '.midi':
+            case 'mid':
+            case 'midi':
                 return 'audio/midi';
-            case '.mp4':
+            case 'mp4':
                 return 'video/mp4';
             // 默认
             default:
@@ -303,79 +303,69 @@ export class HttpApp {
 
     // 异步
     private static responseFile(res: ServerResponse, filename: string, filestat: fs.Stats, filerange?: string) {
+        const prismMap = new Map<string, string | undefined>();
+        prismMap.set('md', "markdown");
+        prismMap.set('py', "python");
+        prismMap.set('bat', "batch");
+        prismMap.set('cmd', "batch");
+        prismMap.set('sh', "bash");
+        prismMap.set('vbs', "visual-basic");
+        prismMap.set('h', "c");
+        prismMap.set('csv', undefined);
+        prismMap.set('iml', undefined);
         // 扩展名
-        const extName = path.extname(filename).toLowerCase();
+        const extPureName = path.extname(filename).toLowerCase().substr(1);
         return new Promise<void>((resolve, rejects) => {
-            switch (extName) {
+            switch (extPureName) {
                 // https://www.bootcdn.cn/prism/
                 // https://prismjs.com/plugins/
-                case '.md':
-                case '.sh':
-                case '.bat':
-                case '.cmd':
-                case '.py':
-                case '.vbs':
-                case '.ts':
-                case '.h':
-                case '.c':
-                case '.cmake':
-                case '.java':
-                case '.sql':
-                case '.ini':
-                case '.iml':
-                case '.yaml':
-                case '.properties':
-                    const getPrismName = (extName: string) => {
-                        switch (extName) {
-                            case '.ts':
-                                return 'typescript';
-                            case '.py':
-                                return 'python';
-                            case '.bat':
-                            case '.cmd':
-                                return 'batch';
-                            case '.sh':
-                                return 'bash';
-                            case '.vbs':
-                                return 'visual-basic';
-                            case '.md':
-                                return 'markdown';
-                            case '.c':
-                            case '.h':
-                                return 'c';
-                            case '.iml':
-                                return 'xml';
-                            default:
-                                return extName.substr(1);
-                        }
-                    };
-                    const prismName = getPrismName(extName);
+                case 'md':
+                case 'sh':
+                case 'bat':
+                case 'cmd':
+                case 'py':
+                case 'vbs':
+                case 'ts':
+                case 'h':
+                case 'c':
+                case 'cmake':
+                case 'java':
+                case 'sql':
+                case 'ini':
+                case 'iml':
+                case 'yaml':
+                case 'csv':
+                case 'properties':
+                    const prismName = prismMap.has(extPureName) ? prismMap.get(extPureName) : extPureName;
+                    const typeName = prismName || extPureName;
                     res.setHeader('Content-Type', 'text/html; charset=utf-8');
                     // res.setHeader('Content-Length', text.byteLength);
                     res.write('<html>');
                     res.write('<head>');
-                    res.write('<script src="https://cdn.bootcss.com/jquery/1.11.0/jquery.min.js"></script>');
-                    res.write('<style>body{background-color:#333333;width:80%;margin-left:10%;margin-right:10%;}.main{}</style>');
+                    res.write('<style>body{color:grey;background-color:#333333;width:80%;margin-left:10%;margin-right:10%;}</style>');
+                    // 复制方法
+                    res.write('<script>function setClipboardText(value){const text=document.createElement("textarea");text.value=value;document.body.appendChild(text);text.select();document.execCommand("Copy");text.remove();}</script>');
                     res.write('</head>');
                     res.write('<body>');
+                    // Toolbar
+                    res.write(`<div class="toolbar"><button onclick="setClipboardText(document.querySelector('.main>pre>code').innerText)">复制代码</button></div>`);
                     // Code
                     res.write('<div class="main">');
-                    const text = fs.readFileSync(filename).toString().replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    // console.log(text);
-                    res.write(`<pre class="line-numbers"><code class="match-braces rainbow-braces language-${prismName}">${text}</code></pre>`);
+                    const text = fs.readFileSync(filename, {encoding: 'utf8'}).toString().replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    res.write(`<pre class="line-numbers" data-download-link data-download-link-label="Download this file"><code class="match-braces rainbow-braces language-${typeName}">${text}</code></pre>`);
                     res.write('</div>');
                     // 基本功能
                     res.write('<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/prism.min.js"></script>');
                     res.write('<link href="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/themes/prism-tomorrow.min.css" rel="stylesheet">');
-                    res.write(`<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/components/prism-${prismName}.min.js"></script>`);
+                    if (prismName) {
+                        res.write(`<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/components/prism-${prismName}.min.js"></script>`);
+                    }
                     // 扩展功能-行号
                     res.write('<link href="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet">');
                     res.write('<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/line-numbers/prism-line-numbers.min.js"></script>');
                     // 扩展功能-括号
                     res.write('<link href="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/match-braces/prism-match-braces.min.css" rel="stylesheet">');
                     res.write('<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/match-braces/prism-match-braces.min.js"></script>');
-                    // // 扩展功能-下载
-                    // res.write('<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/download-button/prism-download-button.min.js"></script>');
                     res.write('</body>');
                     res.write('</html>');
                     res.end();
@@ -384,7 +374,7 @@ export class HttpApp {
                 default:
                     const range = HttpApp.getFileRange(filestat, filerange);
                     // Head
-                    res.setHeader('Content-Type', HttpApp.getMimeType(extName));
+                    res.setHeader('Content-Type', HttpApp.getMimeType(extPureName));
                     res.setHeader('Content-Length', (range.end - range.start + 1));
                     // Body
                     fs.createReadStream(filename, {
