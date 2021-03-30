@@ -308,6 +308,7 @@ export class HttpApp {
         return new Promise<void>((resolve, rejects) => {
             switch (extName) {
                 // https://www.bootcdn.cn/prism/
+                // https://prismjs.com/plugins/
                 case '.md':
                 case '.sh':
                 case '.bat':
@@ -342,6 +343,8 @@ export class HttpApp {
                             case '.c':
                             case '.h':
                                 return 'c';
+                            case '.iml':
+                                return 'xml';
                             default:
                                 return extName.substr(1);
                         }
@@ -359,7 +362,7 @@ export class HttpApp {
                     res.write('<div class="main">');
                     const text = fs.readFileSync(filename).toString().replace(/</g, '&lt;').replace(/>/g, '&gt;');
                     // console.log(text);
-                    res.write(`<pre class="line-numbers"><code class="match-braces language-${prismName}">${text}</code></pre>`);
+                    res.write(`<pre class="line-numbers"><code class="match-braces rainbow-braces language-${prismName}">${text}</code></pre>`);
                     res.write('</div>');
                     // 基本功能
                     res.write('<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/prism.min.js"></script>');
@@ -368,15 +371,11 @@ export class HttpApp {
                     // 扩展功能-行号
                     res.write('<link href="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet">');
                     res.write('<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/line-numbers/prism-line-numbers.min.js"></script>');
-                    // 扩展功能-匹配括号
+                    // 扩展功能-括号
                     res.write('<link href="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/match-braces/prism-match-braces.min.css" rel="stylesheet">');
                     res.write('<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/match-braces/prism-match-braces.min.js"></script>');
-                    // // 扩展功能-Toolbar
-                    // res.write('<link href="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/toolbar/prism-toolbar.min.css" rel="stylesheet">');
-                    // res.write('<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/toolbar/prism-toolbar.min.js"></script>');
-                    // // 扩展功能-TreeView
-                    // res.write('<link href="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/treeview/prism-treeview.min.css" rel="stylesheet">');
-                    // res.write('<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/treeview/prism-treeview.min.js"></script>');
+                    // // 扩展功能-下载
+                    // res.write('<script src="https://cdn.bootcdn.net/ajax/libs/prism/1.23.0/plugins/download-button/prism-download-button.min.js"></script>');
                     res.write('</body>');
                     res.write('</html>');
                     res.end();
