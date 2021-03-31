@@ -151,6 +151,9 @@ export class HttpApp {
                 return 'audio/midi';
             case 'mp4':
                 return 'video/mp4';
+            // 文档
+            case 'pdf':
+                return 'application/pdf';
             // 默认
             default:
                 return 'application/octet-stream';
