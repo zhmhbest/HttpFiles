@@ -4,3 +4,15 @@ export const readJSON = (filename: string): any => {
     const text = fs.readFileSync(filename, {encoding: 'utf-8', flag: 'r'});
     return JSON.parse(text);
 }
+
+export const formatFileSize = (fileSize: number): string => {
+    const UNIT = ["B", "K", "M", "G", "T", "P"];
+    const UNIT_SIZE = UNIT.length;
+    const UNIT_STEP = 1024;
+    let unitIndex = 0;
+    while (fileSize >= UNIT_STEP && unitIndex < UNIT_SIZE - 1) {
+        unitIndex++;
+        fileSize /= UNIT_STEP;
+    }
+    return `${fileSize.toFixed(2)}${UNIT[unitIndex]}`;
+}
