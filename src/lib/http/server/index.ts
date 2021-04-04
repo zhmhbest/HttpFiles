@@ -1,3 +1,5 @@
+import { HttpApp } from "./enhance"
 
-import {} from "./enhance"
-
+export {
+    HttpApp
+};

@@ -1,6 +1,10 @@
 import { IncomingHttpHeaders, ServerResponse } from "http";
 import { request } from "../request";
-import { errorMessage, getPurePath, getRequestQuery, HttpBaseApp, HttpComposedPathIdentity, HttpMethodType, HttpRequestEventResultType } from "./base";
+import { errorMessage, getPurePath, getRequestQuery, HttpBaseApp, HttpComposedPathIdentity, HttpMethodType, HttpRequestEventResultType, redirectLocalPath } from "./base";
+
+import * as path from "path";
+import * as fs from "fs";
+import { responseDirectory, responseFile } from "./file_pages";
 
 export type HttpRequestApiEvent = (
     match: RegExpMatchArray,
@@ -9,12 +13,6 @@ export type HttpRequestApiEvent = (
     headers: IncomingHttpHeaders,
     query: NodeJS.Dict<any>
 ) => Promise<HttpRequestEventResultType>;
-
-export interface HttpFileRange {
-    start: number,
-    end: number,
-    size: number
-}
 
 const error403 = (res: ServerResponse) => errorMessage(res, 403, "Forbidden!");
 const error404 = (res: ServerResponse) => errorMessage(res, 404, "Not Found!");
@@ -98,5 +96,59 @@ export class HttpApp extends HttpBaseApp {
         }));
     }
 
+    /**
+     * 访问文件目录
+     * @param prefixPath
+     * @param dirPath
+     * @param isListDir
+     * @param indexHtmlNames
+     */
+    public onFiles(prefixPath: string, dirPath: string, isListDir?: boolean, indexHtmlNames?: Array<string>): void {
+        prefixPath = getPurePath(prefixPath);
+        isListDir = isListDir || false;
+        const defaultHtmlNames = ['index.html', 'index.htm', 'docs/index.html'];
+
+        this.on(['GET', new RegExp(`^${prefixPath}($|/.*$)`)], (match, req, res) => new Promise<HttpRequestEventResultType>((resolve, rejects) => {
+            // 路径
+            const topSubFullName = decodeURI(getPurePath(match[1]));
+            const matcheArray = topSubFullName.match(/^(.*?)(\?|$)/);
+            const topSubName = matcheArray ? matcheArray[1] : topSubFullName;
+            const topPathName = `${prefixPath}${topSubName}`;
+            const topFileName = path.join(dirPath, topSubName);
+            try {
+                // 判断是否存在
+                const topFileState = fs.statSync(topFileName);
+                if (topFileState.isDirectory()) {
+                    // 探测 index.html | index.htm | ...
+                    for (let indexName of (indexHtmlNames || defaultHtmlNames)) {
+                        const fileName = path.join(topFileName, indexName);
+                        if (fs.existsSync(fileName)) {
+                            // 重定向到默认文件
+                            redirectLocalPath(res, `${topPathName}/${indexName}`);
+                            resolve(); return;
+                        }
+                    }
+                    if (isListDir) {
+                        // 返回目录
+                        responseDirectory(res, topFileName, topPathName);
+                        resolve(); return;
+                    } else {
+                        // 拒绝访问目录
+                        error403(res);
+                        resolve(); return;
+                    }
+                } else {
+                    // 返回文件
+                    responseFile(req, res, topFileName, topFileState).then(() => {
+                        resolve(); return;
+                    })
+                }
+            } catch (err) {
+                // 文件/目录 不存在
+                error404(res);
+                resolve(); return;
+            }
+        }));
+    }
 
 }

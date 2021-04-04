@@ -228,7 +228,7 @@ export class HttpBaseApp {
 
         this.m_server.listen(this.m_port, this.m_host, () => {
             for (let item of this.m_interfaces) {
-                console.log(`- ${undefined === item.method ? '*' : item.method} ${item.pathname}`);
+                console.log(`- ${undefined === item.method ? '*' : [...item.method]} ${item.pathname}`);
             }
             console.log(`Web Server started at http://${this.m_host ? this.m_host : '127.0.0.1'}:${this.m_port}`);
         });

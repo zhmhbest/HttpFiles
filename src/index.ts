@@ -21,4 +21,7 @@ app.onMapping("/maven2", subPath => {
         return `https://maven.aliyun.com/repository/central${subPath}`;
     }
 });
+for (const it of config.on) {
+    app.onFiles(it.prefix, it.dir, true);
+}
 app.listen();
