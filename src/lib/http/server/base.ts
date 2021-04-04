@@ -3,27 +3,41 @@ import { Server, IncomingMessage, ServerResponse, IncomingHttpHeaders } from "ht
 import * as querystring from "querystring";
 import * as multiparty from "multiparty";
 
-type HttpMethodType =
+// Path
+export type HttpMethodType =
     'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' |
     'COPY' | 'HEAD' | 'OPTIONS' |
     'LINK' | 'UNLINK' | 'PURGE' | 'LOCK' | 'UNLOCK' | 'PROPFIND'
-    ;
-type HttpPathMatcher = string | RegExp;
-interface HttpRequestInterface {
-    method?: Set<HttpMethodType>,
-    pathname: HttpPathMatcher,
-    event: HttpRequestEvent
-}
-interface HttpEasyResponse {
+;
+export type HttpPathMatcher = string | RegExp;
+export type HttpComposedPathIdentity =
+    HttpPathMatcher |
+    [
+        HttpMethodType | Array<HttpMethodType> | undefined,
+        HttpPathMatcher
+    ]
+;
+
+// Event
+export interface HttpEasyResponse {
     body: any,
     status?: number,
     headers?: IncomingHttpHeaders
 };
-type HttpRequestEvent = (
+export type HttpRequestEventResultType = void | string | HttpEasyResponse;
+export type HttpRequestEvent = (
     match: RegExpMatchArray,
     req: IncomingMessage,
     res: ServerResponse
-) => Promise<void | string | HttpEasyResponse>;
+) => Promise<HttpRequestEventResultType>;
+
+// RequestInterface
+export interface HttpRequestInterface {
+    method?: Set<HttpMethodType>,
+    pathname: RegExp,
+    event: HttpRequestEvent
+}
+
 
 /**
  * 返回“请求错误”响应
@@ -88,7 +102,8 @@ export const getRequestQuery = (req: IncomingMessage) => new Promise<NodeJS.Dict
         // Body
         const contentType = req.headers['content-type'];
         if (undefined === contentType) {
-            rejects(new Error('Undefined Content-Type!')); return;
+            // rejects(new Error('Undefined Content-Type!')); return;
+            resolve({}); return;
         }
         // FormData
         if ('multipart/form-data' === contentType.split(';', 1)[0]) {
@@ -125,33 +140,37 @@ export class HttpBaseApp {
     }
 
     public on(
-        pathname:
-            HttpPathMatcher |
-            [
-                HttpMethodType | Array<HttpMethodType>,
-                HttpPathMatcher
-            ],
+        pathname: HttpComposedPathIdentity,
         event: HttpRequestEvent
     ): void {
         let item = {} as HttpRequestInterface;
+        let pn: HttpPathMatcher;
         if (pathname instanceof Array) {
             // Mthodtype, Pathname
             const mt = pathname[0];
-            const pn = pathname[1];
-            const mts = new Set<HttpMethodType>();
-            if (typeof mt === 'string') {
-                mts.add(mt.toUpperCase() as HttpMethodType)
+            pn = pathname[1];
+            if(undefined === mt) {
+                item.method = undefined;
             } else {
-                for (let item of mt) {
-                    mts.add(item.toUpperCase() as HttpMethodType)
+                const mts = new Set<HttpMethodType>();
+                if (typeof mt === 'string') {
+                    mts.add(mt.toUpperCase() as HttpMethodType)
+                } else {
+                    for (let item of mt) {
+                        mts.add(item.toUpperCase() as HttpMethodType)
+                    }
                 }
+                item.method = mts;
             }
-            item.method = mts;
-            item.pathname = pn;
         } else {
             // Undefined, Pathname
             item.method = undefined;
-            item.pathname = pathname;
+            pn = pathname;
+        }
+        if (pn instanceof RegExp) {
+            item.pathname = pn;
+        } else {
+            item.pathname = new RegExp(`^${pn}($|\\?)`);
         }
         item.event = event;
         this.m_interfaces.push(item);
