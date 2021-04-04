@@ -7,24 +7,21 @@ import { getMimeTypeByExtname } from "./file_mime";
 
 interface HttpFileRange {
     start: number,
-    end: number,
-    size: number
+    end: number
 }
 const getFileRange = (filestat: fs.Stats, filerange?: string): HttpFileRange => {
     // req.headers['content-range']
     let range = {
         start: 0,
-        end: filestat.size - 1,
-        size: filestat.size
+        end: filestat.size - 1
     } as HttpFileRange;
     if (filerange) {
-        const rangeMatcher = /bytes (?<L>\*|(?<start>\d+)-(?<end>\d+))(?<R>\/(?<size>\*|\d+))?/;
+        const rangeMatcher = /bytes=(?<start>\d+)-(?<end>\d+|$)/;
         const match = filerange.match(rangeMatcher);
         if (match) {
             const groups = match.groups as { start?: string, end?: string, size?: string };
             if (groups.start) range.start = parseInt(groups.start);
             if (groups.end) range.end = parseInt(groups.end);
-            if (groups.size) range.size = parseInt(groups.size);
         }
     }
     return range;
@@ -35,9 +32,11 @@ export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName
     const prismInfo = getPrism(extName);
     if (undefined === prismInfo) {
         // 【文件流】
-        const fileRange = getFileRange(fileStat, req.headers['content-range']);
+        const fileRange = getFileRange(fileStat, req.headers['range']);
+        // console.log(req.headers['range'], fileRange);
         // Head
         res.setHeader('Content-Type', getMimeTypeByExtname(extName));
+        res.setHeader('Content-Range', `bytes ${fileRange.start}-${fileRange.end}/${fileStat.size}`);
         res.setHeader('Content-Length', (fileRange.end - fileRange.start + 1));
         // Body
         fs.createReadStream(fileName, {
