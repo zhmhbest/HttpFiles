@@ -88,6 +88,31 @@ export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName
     }
 });
 
+const formatDate = (toFormat? : Date | string | number, formatType?: string) => {
+    if (undefined === toFormat)
+        toFormat = new Date();
+    else
+        toFormat = (toFormat instanceof Date) ? toFormat : new Date(toFormat);
+    formatType = formatType || 'y-M-d h:m:s';
+
+    const buf: Array<string | number> = [];
+    for(let i=0; i<formatType.length; i++) {
+        let ch = formatType.substr(i, 1);
+        switch(ch) {
+            case 'y': buf.push(toFormat.getFullYear()); break;
+            case 'M': buf.push(toFormat.getMonth()+1); break;
+            case 'd': buf.push(toFormat.getDate()); break;
+            case 'H': buf.push(toFormat.getHours()); break;
+            case 'm': buf.push(toFormat.getMinutes()); break;
+            case 's': buf.push(toFormat.getSeconds()); break;
+            case 'S': buf.push(toFormat.getMilliseconds()); break;
+            default: buf.push(ch); break;
+        }
+    }
+    return buf.join('');
+};
+
+
 export const responseDirectory = (res: ServerResponse, topFileName: string, topPathName: string): void => {
     // 返回目录
     res.setHeader('content-type', 'text/html; charset=utf-8');
@@ -101,6 +126,7 @@ body{font-size:150%;font-family:serif;color:#999999;background-color:#333333}
 table{width:100%}tr{margin-top:8px}tr:hover{background-color: black}
 a{text-decoration:none}a:link{color:pink}a:visited{color:hotpink}
 .main{margin-left:6%;margin-right:6%}
+svg{wdith: 32px; height:32px}
 </style></head>`.trimLeft());
     // ----------------------------------------------------------------
     // Body
@@ -109,7 +135,7 @@ a{text-decoration:none}a:link{color:pink}a:visited{color:hotpink}
 <h2>${0 === topPathName.length ? '/' : topPathName}</h2>
 <table>
     <thead><tr>
-            <td>□</td>
+            <td style="width: 32px;"></td>
             <td><a href='${topPathName}/..'>..</a></td>
             <td>文件大小</td>
             <td>创建时间</td>
@@ -124,11 +150,17 @@ a{text-decoration:none}a:link{color:pink}a:visited{color:hotpink}
             const pathName = `${topPathName}/${name}`;
             const fileStat = fs.statSync(fileName);
             res.write(`<tr>`);
-            res.write(`<td>${fileStat.isDirectory() ? '□' : '■'}</td>`);
+            res.write(`<td>`);
+            if(fileStat.isDirectory()) {
+                res.write('<svg style="color: Goldenrod;" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z"></path><path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"></path></svg>');
+            } else {
+                res.write('<svg style="color: LightBlue;" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path></svg>');
+            }
+            res.write(`</td>`);
             res.write(`<td><a href='${pathName}'>${name}</a></td>`);
             res.write(`<td>${fileStat.isDirectory() ? '' : formatFileSize(fileStat.size)}</td>`);
-            res.write(`<td>${fileStat.isDirectory() ? '' : fileStat.ctime.toLocaleString()}</td>`);
-            res.write(`<td>${fileStat.isDirectory() ? '' : fileStat.mtime.toLocaleString()}</td>`);
+            res.write(`<td>${fileStat.isDirectory() ? '' : formatDate(fileStat.ctime, 'y-M-d H:m:s')}</td>`);
+            res.write(`<td>${fileStat.isDirectory() ? '' : formatDate(fileStat.mtime, 'y-M-d H:m:s')}</td>`);
             res.write(`</tr>\n`);
         } catch (err) { continue; }
     }
