@@ -1,5 +1,6 @@
 // https://www.bootcdn.cn/prism/
 // https://prismjs.com/plugins/
+// https://github.com/PrismJS/prism/releases
 
 const ExtPrismMap = new Map<string, string | undefined>(
     [
@@ -32,7 +33,8 @@ export const getPrism = (extname: string): undefined | [string | undefined, stri
         return [
             `prism-${sourceName}`,
             `language-${languageName}`,
-            "https://cdn.bootcdn.net/ajax/libs/prism/1.23.0"
+            // "https://cdn.bootcdn.net/ajax/libs/prism/1.23.0"
+            "http://127.0.0.1/static/prism/1.23.0"
         ];
     }
     return undefined;

@@ -69,16 +69,16 @@ export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName
         res.write(`<pre class="line-numbers" data-download-link data-download-link-label="Download this file"><code class="match-braces rainbow-braces ${languageName}">${text}</code></pre>`);
         res.write('</div>');
         // 基本功能
-        res.write(`<script src="${cdnURL}/prism.min.js"></script>`);
-        res.write(`<link href="${cdnURL}/themes/prism-tomorrow.min.css" rel="stylesheet">`);
+        res.write(`<script src="${cdnURL}/prism.js"></script>`);
+        res.write(`<link href="${cdnURL}/themes/prism-tomorrow.css" rel="stylesheet">`);
         if (sourceName) {
             res.write(`<script src="${cdnURL}/components/${sourceName}.min.js"></script>`);
         }
         // 扩展功能-行号
-        res.write(`<link href="${cdnURL}/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet">`);
+        res.write(`<link href="${cdnURL}/plugins/line-numbers/prism-line-numbers.css" rel="stylesheet">`);
         res.write(`<script src="${cdnURL}/plugins/line-numbers/prism-line-numbers.min.js"></script>`);
         // 扩展功能-括号
-        res.write(`<link href="${cdnURL}/plugins/match-braces/prism-match-braces.min.css" rel="stylesheet">`);
+        res.write(`<link href="${cdnURL}/plugins/match-braces/prism-match-braces.css" rel="stylesheet">`);
         res.write(`<script src="${cdnURL}/plugins/match-braces/prism-match-braces.min.js"></script>`);
         res.write('</body>');
         res.write('</html>');
