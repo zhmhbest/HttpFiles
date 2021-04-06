@@ -2,40 +2,73 @@
 // https://prismjs.com/plugins/
 // https://github.com/PrismJS/prism/releases
 
-const ExtPrismMap = new Map<string, string | undefined>(
+// const CDN_URL = "https://cdn.bootcdn.net/ajax/libs/prism/1.23.0";
+const CDN_URL = "http://127.0.0.1/static/prism/1.23.0";
+
+const ExtPrismMap = new Map<string, undefined | string | [string | Array<string>, string]>(
     [
+        // ext [sourceName languageName]
+        // ext undefined = ext [undefined ext]
+        // ext str       = ext [str str]
         ['md', 'markdown'],
-        ['py', 'python'],
+        // Shell
+        ['sh', 'bash'],
         ['bat', 'batch'],
         ['cmd', 'batch'],
-        ['sh', 'bash'],
+        // Language
+        ['sql', 'sql'],
+        ['py', 'python'],
+        ['vb', 'visual-basic'],
         ['vbs', 'visual-basic'],
-        ['h', 'c'],
+        ['rs', 'rust'],
         ['ts', 'typescript'],
+        ['java', 'java'],
+        ['go', 'go'],
+        ['scala', [['java', 'scala'], 'scala']],
+        // C/C++
+        ['c', 'c'],
+        ['h', 'c'],
+        ['cpp', 'cpp'],
+        ['cmake', 'cmake'],
+        // BNF
+        ['l', 'bnf'],
+        ['y', 'bnf'],
+        ['jison', 'bnf'],
+        // Config
         ['csv', undefined],
-        ['iml', 'html']
+        ['ini', 'ini'],
+        ['yaml', 'yaml'],
+        ['toml', 'toml'],
+        ['properties', 'properties'],
+        // Web
+        ['jsp', 'html'],
+        ['asp', 'aspnet'],
+        ['php', 'php'],
+        // Others
+        ['tex', 'latex'],
+        ['iml', 'html'],
+
     ]
 );
-
-const ExtCodeSet = new Set<string>([
-    'md', 'sh', 'bat', 'cmd', 'py', 'vbs', 'ts', 'h', 'c', 'cmake', 'java', 'sql', 'ini', 'iml', 'yaml', 'csv', 'properties'
-]);
 
 /**
  *
  * @param extname
  * @returns [sourceName, languageName, cdnURL]
  */
-export const getPrism = (extname: string): undefined | [string | undefined, string, string] => {
-    if(ExtCodeSet.has(extname)) {
-        const sourceName = ExtPrismMap.has(extname) ? ExtPrismMap.get(extname) : extname;
-        const languageName = sourceName || extname;
-        return [
-            `prism-${sourceName}`,
-            `language-${languageName}`,
-            // "https://cdn.bootcdn.net/ajax/libs/prism/1.23.0"
-            "http://127.0.0.1/static/prism/1.23.0"
-        ];
+export const getPrism = (extname: string): undefined | [undefined | string | Array<string>, string, string] => {
+    if (ExtPrismMap.has(extname)) {
+        const item = ExtPrismMap.get(extname);
+        if (item instanceof Array) {
+            const [sourceNames, languageName] = item;
+            return [sourceNames, languageName, CDN_URL];
+        } else {
+            if (undefined === item) {
+                return [undefined, extname, CDN_URL];
+            } else {
+                return [item, item, CDN_URL];
+            }
+        }
     }
     return undefined;
 }

@@ -53,7 +53,7 @@ export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName
         });
     } else {
         // 【代码预览】
-        const [sourceName, languageName, cdnURL] = prismInfo;
+        const [sourceNames, languageName, cdnURL] = prismInfo;
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.write('<html>');
         res.write('<head>');
@@ -66,13 +66,20 @@ export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName
         // Code
         res.write('<div class="main">');
         const text = fs.readFileSync(fileName, { encoding: 'utf8' }).toString().replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        res.write(`<pre class="line-numbers" data-download-link data-download-link-label="Download this file"><code class="match-braces rainbow-braces ${languageName}">${text}</code></pre>`);
+        res.write(`<pre class="line-numbers" data-download-link data-download-link-label="Download this file"><code class="match-braces rainbow-braces language-${languageName}">${text}</code></pre>`);
         res.write('</div>');
         // 基本功能
         res.write(`<script src="${cdnURL}/prism.js"></script>`);
+        // res.write(`<script src="${cdnURL}/components.js"></script>`);
         res.write(`<link href="${cdnURL}/themes/prism-tomorrow.css" rel="stylesheet">`);
-        if (sourceName) {
-            res.write(`<script src="${cdnURL}/components/${sourceName}.min.js"></script>`);
+        if (sourceNames) {
+            if (sourceNames instanceof Array) {
+                for (let sourceName of sourceNames) {
+                    res.write(`<script src="${cdnURL}/components/prism-${sourceName}.min.js"></script>`);
+                }
+            } else {
+                res.write(`<script src="${cdnURL}/components/prism-${sourceNames}.min.js"></script>`);
+            }
         }
         // 扩展功能-行号
         res.write(`<link href="${cdnURL}/plugins/line-numbers/prism-line-numbers.css" rel="stylesheet">`);
@@ -87,7 +94,7 @@ export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName
     }
 });
 
-const formatDate = (toFormat? : Date | string | number, formatType?: string) => {
+const formatDate = (toFormat?: Date | string | number, formatType?: string) => {
     if (undefined === toFormat)
         toFormat = new Date();
     else
@@ -95,11 +102,11 @@ const formatDate = (toFormat? : Date | string | number, formatType?: string) => 
     formatType = formatType || 'y-M-d h:m:s';
 
     const buf: Array<string | number> = [];
-    for(let i=0; i<formatType.length; i++) {
+    for (let i = 0; i < formatType.length; i++) {
         let ch = formatType.substr(i, 1);
-        switch(ch) {
+        switch (ch) {
             case 'y': buf.push(toFormat.getFullYear()); break;
-            case 'M': buf.push(toFormat.getMonth()+1); break;
+            case 'M': buf.push(toFormat.getMonth() + 1); break;
             case 'd': buf.push(toFormat.getDate()); break;
             case 'H': buf.push(toFormat.getHours()); break;
             case 'm': buf.push(toFormat.getMinutes()); break;
@@ -150,7 +157,7 @@ svg{wdith: 32px; height:32px}
             const fileStat = fs.statSync(fileName);
             res.write(`<tr>`);
             res.write(`<td>`);
-            if(fileStat.isDirectory()) {
+            if (fileStat.isDirectory()) {
                 res.write('<svg style="color: Goldenrod;" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z"></path><path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"></path></svg>');
             } else {
                 res.write('<svg style="color: LightBlue;" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path></svg>');
