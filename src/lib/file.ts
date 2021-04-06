@@ -21,3 +21,9 @@ export const formatFileSize = (fileSize: number): string => {
 export const getPureExtensionName = (fileName: string): string => {
     return path.extname(fileName).toLowerCase().substr(1);
 };
+
+export const moveFile = (originalName: string, newName: string) => {
+    fs.createReadStream(originalName)
+        .pipe(fs.createWriteStream(newName));
+    fs.unlinkSync(originalName);
+};

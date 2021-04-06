@@ -1,6 +1,7 @@
 {
     "host": "localhost",
     "port": 8899,
+    "upload": "E:/tmp",
     "on": [
         {
             "dir": "D:/",

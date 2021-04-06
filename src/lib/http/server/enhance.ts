@@ -5,6 +5,7 @@ import { errorMessage, getPurePath, getRequestQuery, HttpBaseApp, HttpComposedPa
 import * as path from "path";
 import * as fs from "fs";
 import { responseDirectory, responseFile } from "./file_pages";
+import { moveFile } from "../../file";
 
 export type HttpRequestApiEvent = (
     match: RegExpMatchArray,
@@ -149,6 +150,42 @@ export class HttpApp extends HttpBaseApp {
                 resolve(); return;
             }
         }));
+    }
+
+    public onUpload(prefixPath: string, dirPath: string) {
+        prefixPath = getPurePath(prefixPath);
+        this.on(["GET", prefixPath], async (req, res) => `<html>
+            <head>
+                <meta charset="utf-8">
+                <style>body{color:grey;background-color:#333333;width:80%;margin-left:10%;margin-right:10%;}</style>
+            </head>
+            <body>
+                <h2>Upload</h2>
+                <form method="post" action="${prefixPath}" enctype="multipart/form-data">
+                    <input type="file" name="file" />
+                    <input type="submit" value="Upload" />
+                </form>
+            </body>
+        </html>`);
+        this.onApi(["POST", prefixPath], async (match, method, code, headers, query) => {
+            for(let item of Object.keys(query)) {
+                // console.log(query);
+                if (query[item] instanceof Array && query[item][0] instanceof Object) {
+                    const info = query[item][0];
+                    moveFile(info['path'], `${dirPath}/${info['originalFilename']}`);
+                }
+            }
+            return `
+            <head>
+                <meta charset="utf-8">
+                <style>body{color:grey;background-color:#333333;width:80%;margin-left:10%;margin-right:10%;}</style>
+                <meta http-equiv="Refresh" content="3;url=${prefixPath}" />
+            </head>
+            <body>
+                <h2>Done!</h2>
+            </body>
+            `;
+        });
     }
 
 }
