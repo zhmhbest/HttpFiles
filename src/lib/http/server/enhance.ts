@@ -173,7 +173,7 @@ export class HttpApp extends HttpBaseApp {
                 // console.log(query);
                 if (query[item] instanceof Array && query[item][0] instanceof Object) {
                     const info = query[item][0];
-                    moveFile(info['path'], `${dirPath}/${info['originalFilename']}`);
+                    moveFile(info['path'], `${dirPath}/${info['originalFilename']}`, false);
                 }
             }
             return `

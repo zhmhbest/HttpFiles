@@ -22,8 +22,10 @@ export const getPureExtensionName = (fileName: string): string => {
     return path.extname(fileName).toLowerCase().substr(1);
 };
 
-export const moveFile = (originalName: string, newName: string) => {
+export const moveFile = (originalName: string, newName: string, isDelete?: boolean) => {
     fs.createReadStream(originalName)
         .pipe(fs.createWriteStream(newName));
-    fs.unlinkSync(originalName);
+    if(undefined === isDelete || isDelete) {
+        fs.unlinkSync(originalName);
+    }
 };
