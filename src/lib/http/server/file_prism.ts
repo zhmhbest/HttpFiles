@@ -3,7 +3,8 @@
 // https://github.com/PrismJS/prism/releases
 
 // const CDN_URL = "https://cdn.bootcdn.net/ajax/libs/prism/1.23.0";
-const CDN_URL = "http://127.0.0.1/static/prism/1.23.0";
+// const CDN_URL = "http://127.0.0.1/static/prism/1.23.0";
+const CDN_URL = "http://192.168.19.90/static/prism/1.23.0";
 
 const ExtPrismMap = new Map<string, undefined | string | [string | Array<string>, string]>(
     [

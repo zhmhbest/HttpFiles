@@ -223,7 +223,7 @@ export class HttpBaseApp {
                 errorMessage(res, 404, "Not Found!");
             }
             // 记录访问日志
-            console.log(`${undefined === req.method ? '*' : req.method} ${pathName}`);
+            console.log(`${req.socket.remoteAddress} ${undefined === req.method ? '*' : req.method} ${pathName}`);
         });
 
         this.m_server.listen(this.m_port, this.m_host, () => {
