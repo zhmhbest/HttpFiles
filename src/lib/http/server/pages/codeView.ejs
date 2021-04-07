@@ -1,0 +1,37 @@
+<html>
+    <head>
+        <style>body{color:grey;background-color:#333333;width:80%;margin-left:10%;margin-right:10%;}</style>
+    </head>
+    <body>
+        <div class="toolbar"><button onclick="setClipboardText(document.querySelector('.main>pre>code').innerText)">复制代码</button></div>
+        <script>
+            function setClipboardText(value) {
+                const text = document.createElement("textarea");
+                text.value = value;
+                document.body.appendChild(text);
+                text.select();
+                document.execCommand("Copy");
+                text.remove();
+            }
+        </script>
+        <div class="main">
+            <pre class="line-numbers"><code class="match-braces rainbow-braces language-<%- languageName %> "><%= text %></code></pre>
+        </div>
+        <% const cdnURL = "http://192.168.19.90/static/prism/1.23.0" %>
+        <script src="<%- cdnURL %>/prism.js"></script>
+        <link href="<%- cdnURL %>/themes/prism-tomorrow.css" rel="stylesheet">
+        <% if (sourceNames) { %>
+            <% if (sourceNames instanceof Array) { %>
+                <% for (let sourceName of sourceNames) { %>
+                    <script src="<%- cdnURL %>/components/prism-<%- sourceName %>.min.js"></script>
+                <% } %>
+            <% } else { %>
+                <script src="<%- cdnURL %>/components/prism-<%- sourceNames %>.min.js"></script>
+            <%  } %>
+        <% } %>
+        <link href="<%- cdnURL %>/plugins/line-numbers/prism-line-numbers.css" rel="stylesheet">
+        <script src="<%- cdnURL %>/plugins/line-numbers/prism-line-numbers.min.js"></script>
+        <link href="<%- cdnURL %>/plugins/match-braces/prism-match-braces.css" rel="stylesheet">
+        <script src="<%- cdnURL %>/plugins/match-braces/prism-match-braces.min.js"></script>
+    </body>
+</html>

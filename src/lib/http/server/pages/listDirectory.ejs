@@ -1,0 +1,36 @@
+<html>
+<head>
+    <style>
+        body{font-size:150%;font-family:serif;color:#999999;background-color:#333333}
+        table{width:100%}tr{margin-top:8px}tr:hover{background-color: black}
+        a{text-decoration:none}a:link{color:pink}a:visited{color:hotpink}
+        .main{margin-left:6%;margin-right:6%}
+        svg{width: 32px; height:32px}
+    </style>
+</head>
+<body>
+    <div class="main">
+    <h2><%- 0 === topPathName.length ? '/' : topPathName %> </h2>
+    <table>
+        <thead><tr>
+                <td style="width: 32px;"></td>
+                <td><a href="<%- topPathName %>/..">..</a></td>
+                <td>文件大小</td>
+                <td>创建时间</td>
+                <td>修改时间</td>
+        </tr></thead>
+        <tbody>
+            <% for(let item of listFiles) { %>
+                <tr>
+                    <td><%- item.icon %></td>
+                    <td><a href="<%- item.pathName %>"><%- item.name %></a></td>
+                    <td><%- item.size %></td>
+                    <td><%- item.ctime %></td>
+                    <td><%- item.mtime %></td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+    </div>
+</body>
+</html>

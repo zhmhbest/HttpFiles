@@ -1,7 +1,9 @@
+import * as fs from "fs";
 import * as http from "http";
 import { Server, IncomingMessage, ServerResponse, IncomingHttpHeaders } from "http";
 import * as querystring from "querystring";
 import * as multiparty from "multiparty";
+import { getMimeTypeByExtname } from "./mimetype";
 
 // Path
 export type HttpMethodType =
@@ -51,6 +53,43 @@ export const errorMessage = (res: ServerResponse, code: number, message: string)
     res.write(message);
     res.end();
 }
+
+
+/**
+ * 返回文件流
+ */
+export const responseFileStream = (req: IncomingMessage, res: ServerResponse, fileName: string, extName: string, fileStat: fs.Stats) => new Promise<void>((resolve, reject) => {
+    // fileRange
+    let fileRange = {
+        start: 0,
+        end: fileStat.size - 1
+    } as { start: number, end: number };
+    const headerRange = req.headers['range'];
+    if (headerRange) {
+        const matches = headerRange.match(/bytes=(?<start>\d+)-(?<end>\d+|$)/);
+        if (matches) {
+            const groups = matches.groups as { start?: string, end?: string };
+            if (groups.start) fileRange.start = parseInt(groups.start);
+            if (groups.end) fileRange.end = parseInt(groups.end);
+        }
+    }
+    // Stream
+    res.setHeader('Content-Type', getMimeTypeByExtname(extName));
+    res.setHeader('Content-Range', `bytes ${fileRange.start}-${fileRange.end}/${fileStat.size}`);
+    res.setHeader('Content-Length', (fileRange.end - fileRange.start + 1));
+    fs.createReadStream(fileName, {
+        flags: 'r',
+        autoClose: true,
+        start: fileRange.start,
+        end: fileRange.end
+    }).on('data', (chunk: Buffer) => {
+        res.write(chunk);
+    }).on('end', () => {
+        res.end();
+        resolve();
+    });
+});
+
 
 /**
  * 重定向到本地其它路径

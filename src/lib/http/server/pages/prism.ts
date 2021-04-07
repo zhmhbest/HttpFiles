@@ -4,7 +4,7 @@
 
 // const CDN_URL = "https://cdn.bootcdn.net/ajax/libs/prism/1.23.0";
 // const CDN_URL = "http://127.0.0.1/static/prism/1.23.0";
-const CDN_URL = "http://192.168.19.90/static/prism/1.23.0";
+// const CDN_URL = "http://192.168.19.90/static/prism/1.23.0";
 
 const ExtPrismMap = new Map<string, undefined | string | [string | Array<string>, string]>(
     [
@@ -57,17 +57,17 @@ const ExtPrismMap = new Map<string, undefined | string | [string | Array<string>
  * @param extname
  * @returns [sourceName, languageName, cdnURL]
  */
-export const getPrism = (extname: string): undefined | [undefined | string | Array<string>, string, string] => {
+export const getPrism = (extname: string): undefined | [undefined | string | Array<string>, string] => {
     if (ExtPrismMap.has(extname)) {
         const item = ExtPrismMap.get(extname);
         if (item instanceof Array) {
             const [sourceNames, languageName] = item;
-            return [sourceNames, languageName, CDN_URL];
+            return [sourceNames, languageName];
         } else {
             if (undefined === item) {
-                return [undefined, extname, CDN_URL];
+                return [undefined, extname];
             } else {
-                return [item, item, CDN_URL];
+                return [item, item];
             }
         }
     }

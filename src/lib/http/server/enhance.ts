@@ -4,8 +4,8 @@ import { errorMessage, getPurePath, getRequestQuery, HttpBaseApp, HttpComposedPa
 
 import * as path from "path";
 import * as fs from "fs";
-import { responseDirectory, responseFile } from "./file_pages";
 import { moveFile } from "../../file";
+import { responseDirectoryHtml, responseFile } from "./pages";
 
 export type HttpRequestApiEvent = (
     match: RegExpMatchArray,
@@ -131,7 +131,8 @@ export class HttpApp extends HttpBaseApp {
                     }
                     if (isListDir) {
                         // 返回目录
-                        responseDirectory(res, topFileName, topPathName);
+                        // responseDirectory(res, topFileName, topPathName);
+                        responseDirectoryHtml(res, topFileName, topPathName);
                         resolve(); return;
                     } else {
                         // 拒绝访问目录

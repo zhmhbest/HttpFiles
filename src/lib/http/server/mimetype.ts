@@ -811,8 +811,8 @@ const ExtMimeTypeMap = new Map<string, string>(
     ]
 );
 
-export const getMimeTypeByExtname = (extname: string): string => {
-    return ExtMimeTypeMap.has(extname) ?
-        ExtMimeTypeMap.get(extname) as string :
+export const getMimeTypeByExtname = (extName: string): string => {
+    return ExtMimeTypeMap.has(extName) ?
+        ExtMimeTypeMap.get(extName) as string :
         "application/octet-stream";
 }
