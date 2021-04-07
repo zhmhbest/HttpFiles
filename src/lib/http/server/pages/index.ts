@@ -13,30 +13,28 @@ const responseHtml = (res: ServerResponse, html: string) => {
     res.end();
 };
 
-const formatDate = (dateValue?: Date | string | number, formatType?: string) => {
-    if (undefined === dateValue)
-        dateValue = new Date();
-    else
-        dateValue = (dateValue instanceof Date) ? dateValue : new Date(dateValue);
-    formatType = formatType || 'y-M-d h:m:s';
 
-    const buf: Array<string | number> = [];
-    for (let i = 0; i < formatType.length; i++) {
-        let ch = formatType.substr(i, 1);
-        switch (ch) {
-            case 'y': buf.push(dateValue.getFullYear()); break;
-            case 'M': buf.push(dateValue.getMonth() + 1); break;
-            case 'd': buf.push(dateValue.getDate()); break;
-            case 'H': buf.push(dateValue.getHours()); break;
-            case 'h': buf.push(dateValue.getHours()); break;
-            case 'm': buf.push(dateValue.getMinutes()); break;
-            case 's': buf.push(dateValue.getSeconds()); break;
-            case 'S': buf.push(dateValue.getMilliseconds()); break;
-            default: buf.push(ch); break;
-        }
+const formatDate = (date: Date, fmt: string) => {
+    const ss = new Map([
+        [/(M+)/, date.getMonth() + 1],
+        [/(d+)/, date.getDate()],
+        [/(H+)/, date.getHours()],
+        [/(h+)/, date.getHours() % 12],
+        [/(m+)/, date.getMinutes()],
+        [/(s+)/, date.getSeconds()],
+        [/(q+)/, Math.floor((date.getMonth() + 3) / 3)],
+        [/(S)/, date.getMilliseconds()],
+    ]);
+    if (/(y+)/.test(fmt)) {
+        fmt = fmt.replace(RegExp.$1, date.getFullYear().toString().substr(4 - RegExp.$1.length));
     }
-    return buf.join('');
-};
+    ss.forEach((val, key) => {
+        if (key.test(fmt)) {
+            fmt = fmt.replace(RegExp.$1, (1 == RegExp.$1.length) ? val.toString() : ((`00${val}`).substr(val.toString().length)));
+        }
+    });
+    return fmt;
+}
 
 export const responseDirectoryHtml = (res: ServerResponse, topFileName: string, topPathName: string) => {
     const template = fs.readFileSync("./lib/http/server/pages/listDirectory.ejs").toString('utf-8');
@@ -64,8 +62,8 @@ export const responseDirectoryHtml = (res: ServerResponse, topFileName: string, 
                     pathName,
                     icon: '<svg style="color: LightBlue;" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path></svg>',
                     size: formatFileSize(fileStat.size),
-                    ctime: formatDate(fileStat.ctime, 'y-M-d H:m:s'),
-                    mtime: formatDate(fileStat.mtime, 'y-M-d H:m:s'),
+                    ctime: formatDate(fileStat.ctime, 'yyyy-MM-dd HH:mm:ss'),
+                    mtime: formatDate(fileStat.mtime, 'yyyy-MM-dd HH:mm:ss'),
                 });
             }
         } catch (err) { continue; }
