@@ -1,11 +1,11 @@
 import { IncomingHttpHeaders, ServerResponse } from "http";
 import { request } from "../request";
-import { errorMessage, getPurePath, getRequestQuery, HttpBaseApp, HttpComposedPathIdentity, HttpMethodType, HttpRequestEventResultType, redirectLocalPath } from "./base";
-
+import { getPurePath, getRequestQuery, HttpBaseApp, HttpComposedPathIdentity, HttpMethodType, HttpRequestEventResultType, redirectLocalPath } from "./base";
 import * as path from "path";
 import * as fs from "fs";
 import { moveFile } from "../../file";
 import { responseDirectoryHtml, responseFile } from "./pages";
+import { error403, error404, error500 } from "./pages/error";
 
 export type HttpRequestApiEvent = (
     match: RegExpMatchArray,
@@ -14,10 +14,6 @@ export type HttpRequestApiEvent = (
     headers: IncomingHttpHeaders,
     query: NodeJS.Dict<any>
 ) => Promise<HttpRequestEventResultType>;
-
-const error403 = (res: ServerResponse) => errorMessage(res, 403, "Forbidden!");
-const error404 = (res: ServerResponse) => errorMessage(res, 404, "Not Found!");
-const error500 = (res: ServerResponse) => errorMessage(res, 500, "Server Error!");
 
 export class HttpApp extends HttpBaseApp {
     /**
@@ -107,7 +103,7 @@ export class HttpApp extends HttpBaseApp {
     public onFiles(prefixPath: string, dirPath: string, isListDir?: boolean, indexHtmlNames?: Array<string>): void {
         prefixPath = getPurePath(prefixPath);
         isListDir = isListDir || false;
-        const defaultHtmlNames = ['index.html', 'index.htm', 'docs/index.html'];
+        const defaultHtmlNames = ['index.html', 'index.htm', 'docs/index.html', 'index.php'];
 
         this.on(['GET', new RegExp(`^${prefixPath}($|/.*$)`)], (match, req, res) => new Promise<HttpRequestEventResultType>((resolve, rejects) => {
             // 路径

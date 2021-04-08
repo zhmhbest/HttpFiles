@@ -1,13 +1,15 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as ejs from "ejs";
+import * as child_process from 'child_process';
 import { IncomingMessage, ServerResponse } from "http";
 import { formatFileSize, getPureExtensionName } from "../../../file";
 import { getPrism } from "./prism";
 import { responseFileStream } from "../base";
+import { error403, error404, error500 } from "./error";
 
 
-const responseHtml = (res: ServerResponse, html: string) => {
+const responseHtml = (res: ServerResponse, html: string | Buffer) => {
     res.setHeader('content-type', 'text/html; charset=utf-8');
     res.write(html);
     res.end();
@@ -80,8 +82,22 @@ export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName
     const extName = getPureExtensionName(fileName);
     const prismInfo = getPrism(extName);
     if (undefined === prismInfo) {
-        responseFileStream(req, res, fileName, extName, fileStat).then(() => resolve());
+        switch (extName) {
+            case 'php':
+                try {
+                    const text = child_process.execSync(`php "${fileName}"`, { cwd: path.dirname(fileName) });
+                    responseHtml(res, text);
+                } catch (err) {
+                    error500(res);
+                    rejects(err);
+                }
+                break;
+            default:
+                responseFileStream(req, res, fileName, extName, fileStat).then(() => resolve());
+                break;
+        }
     } else {
+        // CodeView
         const [sourceNames, languageName] = prismInfo;
         const template = fs.readFileSync("./lib/http/server/pages/codeView.ejs").toString('utf-8');
         const text = fs.readFileSync(fileName, { encoding: 'utf8' }).toString();
