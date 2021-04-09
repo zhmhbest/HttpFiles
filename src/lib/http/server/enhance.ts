@@ -103,7 +103,7 @@ export class HttpApp extends HttpBaseApp {
     public onFiles(prefixPath: string, dirPath: string, isListDir?: boolean, indexHtmlNames?: Array<string>): void {
         prefixPath = getPurePath(prefixPath);
         isListDir = isListDir || false;
-        const defaultHtmlNames = ['index.html', 'index.htm', 'docs/index.html', 'index.php'];
+        const defaultHtmlNames = ['index.html', 'index.htm', 'docs/index.html'];
 
         this.on(['GET', new RegExp(`^${prefixPath}($|/.*$)`)], (match, req, res) => new Promise<HttpRequestEventResultType>((resolve, rejects) => {
             // 路径
@@ -176,7 +176,7 @@ export class HttpApp extends HttpBaseApp {
             <head>
                 <meta charset="utf-8">
                 <style>body{color:grey;background-color:#333333;width:80%;margin-left:10%;margin-right:10%;}</style>
-                <meta http-equiv="Refresh" content="3;url=${prefixPath}" />
+                <meta http-equiv="Refresh" content="2;url=${prefixPath}" />
             </head>
             <body>
                 <h2>Done!</h2>

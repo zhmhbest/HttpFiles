@@ -44,7 +44,7 @@ const ExtPrismMap = new Map<string, undefined | string | [string | Array<string>
         // Web
         ['jsp', 'html'],
         ['asp', 'aspnet'],
-        // ['php', 'php'],
+        ['php', [['markup-templating', 'php'], 'php']],
         // Others
         ['tex', 'latex'],
         ['iml', 'html'],

@@ -82,20 +82,8 @@ export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName
     const extName = getPureExtensionName(fileName);
     const prismInfo = getPrism(extName);
     if (undefined === prismInfo) {
-        switch (extName) {
-            case 'php':
-                try {
-                    const text = child_process.execSync(`php "${fileName}"`, { cwd: path.dirname(fileName) });
-                    responseHtml(res, text);
-                } catch (err) {
-                    error500(res);
-                    rejects(err);
-                }
-                break;
-            default:
-                responseFileStream(req, res, fileName, extName, fileStat).then(() => resolve());
-                break;
-        }
+        responseFileStream(req, res, fileName, extName, fileStat).then(() => resolve());
+        // responseHtml(res, child_process.execSync(`php "${fileName}"`, { cwd: path.dirname(fileName) }));
     } else {
         // CodeView
         const [sourceNames, languageName] = prismInfo;
