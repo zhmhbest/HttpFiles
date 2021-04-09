@@ -1,3 +1,4 @@
+<% const cdnPrismURL = "https://cdn.bootcdn.net/ajax/libs/prism/1.23.0" %>
 <html>
     <head>
         <style>body{color:grey;background-color:#333333;width:80%;margin-left:10%;margin-right:10%;}</style>
@@ -17,21 +18,20 @@
         <div class="main">
             <pre class="line-numbers"><code class="match-braces rainbow-braces language-<%- languageName %> "><%= text %></code></pre>
         </div>
-        <% const cdnURL = "https://cdn.bootcdn.net/ajax/libs/prism/1.23.0" %>
-        <script src="<%- cdnURL %>/prism.js"></script>
-        <link href="<%- cdnURL %>/themes/prism-tomorrow.css" rel="stylesheet">
+        <script src="<%- cdnPrismURL %>/prism.js"></script>
+        <link href="<%- cdnPrismURL %>/themes/prism-tomorrow.css" rel="stylesheet">
         <% if (sourceNames) { %>
             <% if (sourceNames instanceof Array) { %>
                 <% for (let sourceName of sourceNames) { %>
-                    <script src="<%- cdnURL %>/components/prism-<%- sourceName %>.min.js"></script>
+                    <script src="<%- cdnPrismURL %>/components/prism-<%- sourceName %>.min.js"></script>
                 <% } %>
             <% } else { %>
-                <script src="<%- cdnURL %>/components/prism-<%- sourceNames %>.min.js"></script>
+                <script src="<%- cdnPrismURL %>/components/prism-<%- sourceNames %>.min.js"></script>
             <%  } %>
         <% } %>
-        <link href="<%- cdnURL %>/plugins/line-numbers/prism-line-numbers.css" rel="stylesheet">
-        <script src="<%- cdnURL %>/plugins/line-numbers/prism-line-numbers.min.js"></script>
-        <link href="<%- cdnURL %>/plugins/match-braces/prism-match-braces.css" rel="stylesheet">
-        <script src="<%- cdnURL %>/plugins/match-braces/prism-match-braces.min.js"></script>
+        <link href="<%- cdnPrismURL %>/plugins/line-numbers/prism-line-numbers.css" rel="stylesheet">
+        <script src="<%- cdnPrismURL %>/plugins/line-numbers/prism-line-numbers.min.js"></script>
+        <link href="<%- cdnPrismURL %>/plugins/match-braces/prism-match-braces.css" rel="stylesheet">
+        <script src="<%- cdnPrismURL %>/plugins/match-braces/prism-match-braces.min.js"></script>
     </body>
 </html>

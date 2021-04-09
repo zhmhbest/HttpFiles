@@ -96,6 +96,13 @@ export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName
                 sourceNames
             });
             resolve(); return;
+        } else if ('md' === extName) {
+            // Markdown
+            const text = fs.readFileSync(fileName, { encoding: 'utf8' }).toString();
+            responseEJS(res, "mdView.ejs", {
+                text
+            });
+            resolve(); return;
         }
     }
     // 默认响应方式
