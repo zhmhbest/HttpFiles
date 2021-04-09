@@ -10,7 +10,7 @@ export type HttpMethodType =
     'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' |
     'COPY' | 'HEAD' | 'OPTIONS' |
     'LINK' | 'UNLINK' | 'PURGE' | 'LOCK' | 'UNLOCK' | 'PROPFIND'
-;
+    ;
 export type HttpPathMatcher = string | RegExp;
 export type HttpComposedPathIdentity =
     HttpPathMatcher |
@@ -18,7 +18,7 @@ export type HttpComposedPathIdentity =
         HttpMethodType | Array<HttpMethodType> | undefined,
         HttpPathMatcher
     ]
-;
+    ;
 
 // Event
 export interface HttpEasyResponse {
@@ -53,7 +53,9 @@ export const errorMessage = (res: ServerResponse, code: number, message: string)
     res.write(message);
     res.end();
 }
-
+export const error403 = (res: ServerResponse) => errorMessage(res, 403, "Forbidden!");
+export const error404 = (res: ServerResponse) => errorMessage(res, 404, "Not Found!");
+export const error500 = (res: ServerResponse) => errorMessage(res, 500, "Internal Server Error!");
 
 /**
  * 返回文件流
@@ -188,7 +190,7 @@ export class HttpBaseApp {
             // Mthodtype, Pathname
             const mt = pathname[0];
             pn = pathname[1];
-            if(undefined === mt) {
+            if (undefined === mt) {
                 item.method = undefined;
             } else {
                 const mts = new Set<HttpMethodType>();
@@ -217,49 +219,55 @@ export class HttpBaseApp {
 
     public listen(): void {
         this.m_server = http.createServer((req: IncomingMessage, res: ServerResponse) => {
-            // 错误返回500
-            res.on('error', (err) => {
-                errorMessage(res, 500, "Server Error!");
-            });
-            // 匹配链接
             const pathName = req.url ? req.url.toString() : '/';
-            let isNotMatched = true;
-            for (let item of this.m_interfaces) {
-                // 验证Method
-                const requestMethod = req.method;
-                if (
-                    undefined === requestMethod ||
-                    undefined !== item.method &&
-                    !item.method.has(requestMethod.toUpperCase() as HttpMethodType)
-                ) continue;
-                // 验证Pathname
-                const match = pathName.match(item.pathname);
-                if (null == match) continue;
-                // 智能返回
-                item.event(match, req, res).then(result => {
-                    if (undefined !== result) {
-                        if ('string' === typeof result) {
-                            res.write(result);
-                        } else {
-                            if (undefined !== result.headers) {
-                                for (let item of Object.keys(result.headers)) {
-                                    res.setHeader(item, result.headers[item] as string)
+            // req.on('error', (err) => {
+            //     error500(res);
+            // });
+            // res.on('error', (err) => {
+            //     error500(res);
+            // });
+            try {
+                // 匹配链接
+                let isNotMatched = true;
+                for (let item of this.m_interfaces) {
+                    // 验证Method
+                    const requestMethod = req.method;
+                    if (
+                        undefined === requestMethod ||
+                        undefined !== item.method &&
+                        !item.method.has(requestMethod.toUpperCase() as HttpMethodType)
+                    ) continue;
+                    // 验证Pathname
+                    const matches = pathName.match(item.pathname);
+                    if (null == matches) continue;
+                    // 智能返回
+                    item.event(matches, req, res).then(result => {
+                        if (undefined !== result) {
+                            if ('string' === typeof result) {
+                                res.write(result);
+                            } else {
+                                if (result.headers) {
+                                    for (let item of Object.keys(result.headers)) {
+                                        res.setHeader(item, result.headers[item] as string)
+                                    }
                                 }
+                                if(result.status) res.writeHead(result.status);
+                                res.write(result.body);
                             }
-                            res.writeHead(result.status ? result.status : 200);
-                            res.write(result.body);
                         }
-                    }
-                    // 保证匹配成功后连接一定关闭
-                    res.end();
-                });
-                // 匹配成功，退出循环
-                isNotMatched = false;
-                break;
-            }
-            // 未匹配返回404
-            if (isNotMatched) {
-                errorMessage(res, 404, "Not Found!");
+                        // 保证匹配成功后连接一定关闭
+                        res.end();
+                    });
+                    // 匹配成功，退出循环
+                    isNotMatched = false;
+                    break;
+                }
+                // 未匹配返回404
+                if (isNotMatched) {
+                    error404(res);
+                }
+            } catch (err) {
+                error500(res);
             }
             // 记录访问日志
             console.log(`${req.socket.remoteAddress} ${undefined === req.method ? '*' : req.method} ${pathName}`);

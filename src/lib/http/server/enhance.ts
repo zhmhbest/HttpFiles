@@ -4,8 +4,8 @@ import { getPurePath, getRequestQuery, HttpBaseApp, HttpComposedPathIdentity, Ht
 import * as path from "path";
 import * as fs from "fs";
 import { moveFile } from "../../file";
-import { responseDirectoryHtml, responseFile } from "./pages";
-import { error403, error404, error500 } from "./pages/error";
+import { responseDirectoryHtml, responseFile, responseUploadFileHtml } from "./pages";
+import { error403, error404, error500 } from "./base";
 
 export type HttpRequestApiEvent = (
     match: RegExpMatchArray,
@@ -149,21 +149,16 @@ export class HttpApp extends HttpBaseApp {
         }));
     }
 
+    /**
+     * 上传文件
+     * @param prefixPath
+     * @param dirPath
+     */
     public onUpload(prefixPath: string, dirPath: string) {
         prefixPath = getPurePath(prefixPath);
-        this.on(["GET", prefixPath], async (req, res) => `<html>
-            <head>
-                <meta charset="utf-8">
-                <style>body{color:grey;background-color:#333333;width:80%;margin-left:10%;margin-right:10%;}</style>
-            </head>
-            <body>
-                <h2>Upload</h2>
-                <form method="post" action="${prefixPath}" enctype="multipart/form-data">
-                    <input type="file" name="file" />
-                    <input type="submit" value="Upload" />
-                </form>
-            </body>
-        </html>`);
+        this.on(["GET", prefixPath], async (match, req, res) => {
+            responseUploadFileHtml(res, prefixPath);
+        });
         this.onApi(["POST", prefixPath], async (match, method, code, headers, query) => {
             for(let item of Object.keys(query)) {
                 // console.log(query);
@@ -172,16 +167,13 @@ export class HttpApp extends HttpBaseApp {
                     moveFile(info['path'], `${dirPath}/${info['originalFilename']}`, false);
                 }
             }
-            return `
-            <head>
-                <meta charset="utf-8">
-                <style>body{color:grey;background-color:#333333;width:80%;margin-left:10%;margin-right:10%;}</style>
-                <meta http-equiv="Refresh" content="2;url=${prefixPath}" />
-            </head>
-            <body>
-                <h2>Done!</h2>
-            </body>
-            `;
+            return {
+                body: 'OK',
+                status: 302,
+                headers: {
+                    'Location': prefixPath
+                }
+            };
         });
     }
 

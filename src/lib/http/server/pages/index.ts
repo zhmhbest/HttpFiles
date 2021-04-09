@@ -6,13 +6,18 @@ import { IncomingMessage, ServerResponse } from "http";
 import { formatFileSize, getPureExtensionName } from "../../../file";
 import { getPrism } from "./prism";
 import { responseFileStream } from "../base";
-import { error403, error404, error500 } from "./error";
+import { error403, error404, error500 } from "../base";
+// https://ejs.bootcss.com/#docs
 
 
 const responseHtml = (res: ServerResponse, html: string | Buffer) => {
     res.setHeader('content-type', 'text/html; charset=utf-8');
     res.write(html);
     res.end();
+};
+const responseEJS = (res: ServerResponse, ejsName: string, options?: ejs.Data) => {
+    const template = fs.readFileSync(`./lib/http/server/pages/${ejsName}`).toString('utf-8');
+    responseHtml(res, ejs.render(template, options));
 };
 
 
@@ -39,7 +44,6 @@ const formatDate = (date: Date, fmt: string) => {
 }
 
 export const responseDirectoryHtml = (res: ServerResponse, topFileName: string, topPathName: string) => {
-    const template = fs.readFileSync("./lib/http/server/pages/listDirectory.ejs").toString('utf-8');
     const listFiles = [];
     for (let name of fs.readdirSync(topFileName)) {
         try {
@@ -52,7 +56,6 @@ export const responseDirectoryHtml = (res: ServerResponse, topFileName: string, 
                     name,
                     fileName,
                     pathName,
-                    icon: '<svg style="color: Goldenrod;" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z"></path><path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"></path></svg>',
                     size: '',
                     ctime: '',
                     mtime: '',
@@ -62,7 +65,6 @@ export const responseDirectoryHtml = (res: ServerResponse, topFileName: string, 
                     name,
                     fileName,
                     pathName,
-                    icon: '<svg style="color: LightBlue;" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path></svg>',
                     size: formatFileSize(fileStat.size),
                     ctime: formatDate(fileStat.ctime, 'yyyy-MM-dd HH:mm:ss'),
                     mtime: formatDate(fileStat.mtime, 'yyyy-MM-dd HH:mm:ss'),
@@ -71,11 +73,11 @@ export const responseDirectoryHtml = (res: ServerResponse, topFileName: string, 
         } catch (err) { continue; }
     }
     // console.log(listFiles);
-    responseHtml(res, ejs.render(template, {
+    responseEJS(res, "listDirectory.ejs", {
         topFileName,
         topPathName,
         listFiles
-    }))
+    });
 };
 
 export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName: string, fileStat: fs.Stats) => new Promise<void>((resolve, rejects) => {
@@ -87,13 +89,18 @@ export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName
     } else {
         // CodeView
         const [sourceNames, languageName] = prismInfo;
-        const template = fs.readFileSync("./lib/http/server/pages/codeView.ejs").toString('utf-8');
         const text = fs.readFileSync(fileName, { encoding: 'utf8' }).toString();
-        responseHtml(res, ejs.render(template, {
+        responseEJS(res, "codeView.ejs", {
             text,
             languageName,
             sourceNames
-        }))
+        });
         resolve();
     }
 });
+
+export const responseUploadFileHtml = (res: ServerResponse, actionPath: string) => {
+    responseEJS(res, "uploadFile.ejs", {
+        actionPath
+    });
+};
