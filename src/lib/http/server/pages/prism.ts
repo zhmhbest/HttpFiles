@@ -11,7 +11,7 @@ const ExtPrismMap = new Map<string, undefined | string | [string | Array<string>
         // ext [sourceName languageName]
         // ext undefined = ext [undefined ext]
         // ext str       = ext [str str]
-        ['md', 'markdown'],
+        // ['md', 'markdown'],
         // Shell
         ['sh', 'bash'],
         ['bat', 'batch'],
@@ -42,13 +42,12 @@ const ExtPrismMap = new Map<string, undefined | string | [string | Array<string>
         ['toml', 'toml'],
         ['properties', 'properties'],
         // Web
-        ['jsp', 'html'],
-        ['asp', 'aspnet'],
+        ['jsp', [['markup-templating', 'java'], 'java']],
+        // ['asp', 'aspnet'],
         ['php', [['markup-templating', 'php'], 'php']],
         // Others
         ['tex', 'latex'],
         ['iml', 'html'],
-
     ]
 );
 

@@ -81,22 +81,26 @@ export const responseDirectoryHtml = (res: ServerResponse, topFileName: string, 
 };
 
 export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName: string, fileStat: fs.Stats) => new Promise<void>((resolve, rejects) => {
+    const Referer = req.headers['referer'];
     const extName = getPureExtensionName(fileName);
-    const prismInfo = getPrism(extName);
-    if (undefined === prismInfo) {
-        responseFileStream(req, res, fileName, extName, fileStat).then(() => resolve());
-        // responseHtml(res, child_process.execSync(`php "${fileName}"`, { cwd: path.dirname(fileName) }));
-    } else {
-        // CodeView
-        const [sourceNames, languageName] = prismInfo;
-        const text = fs.readFileSync(fileName, { encoding: 'utf8' }).toString();
-        responseEJS(res, "codeView.ejs", {
-            text,
-            languageName,
-            sourceNames
-        });
-        resolve();
+    if(Referer) {
+        // 来自浏览器访问
+        const prismInfo = getPrism(extName);
+        if (prismInfo) {
+            // CodeView
+            const [sourceNames, languageName] = prismInfo;
+            const text = fs.readFileSync(fileName, { encoding: 'utf8' }).toString();
+            responseEJS(res, "codeView.ejs", {
+                text,
+                languageName,
+                sourceNames
+            });
+            resolve(); return;
+        }
     }
+    // 默认响应方式
+    responseFileStream(req, res, fileName, extName, fileStat).then(() => resolve());
+    // responseHtml(res, child_process.execSync(`php "${fileName}"`, { cwd: path.dirname(fileName) }));
 });
 
 export const responseUploadFileHtml = (res: ServerResponse, actionPath: string) => {
