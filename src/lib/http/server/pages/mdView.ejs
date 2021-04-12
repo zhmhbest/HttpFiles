@@ -1,19 +1,17 @@
-<% const cdnPrismURL = "https://cdn.bootcdn.net/ajax/libs/prism/1.23.0" %>
-<% const cdnShowdownURL = "https://cdn.bootcdn.net/ajax/libs/showdown/1.9.1" %>
 <html>
 <head>
     <meta charset="utf-8">
     <style>
         body{color:lightgrey;background-color:#333333;width:80%;margin-left:10%;margin-right:10%;}
         a{text-decoration:none}a:link{color:pink}a:visited{color:hotpink}
+        blockquote{background-color:#524c4c;border-left:4px solid #a89a9a;}
     </style>
 </head>
 <body>
 <pre><%= text %></pre>
 <div></div>
-<script src="<%- cdnPrismURL %>/prism.js"></script>
-<link href="<%- cdnPrismURL %>/themes/prism-tomorrow.css" rel="stylesheet">
-<script src="<%- cdnShowdownURL %>/showdown.min.js"></script>
+<%- include(`./showdownSources.ejs`); %>
+<%- include(`./prismSources.ejs`, {sourceNames}); %>
 <script>
     const converter = new showdown.Converter();
     const preElement = document.querySelector('pre');

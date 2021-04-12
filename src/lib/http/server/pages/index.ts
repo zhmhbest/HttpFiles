@@ -4,7 +4,7 @@ import * as ejs from "ejs";
 import * as child_process from 'child_process';
 import { IncomingMessage, ServerResponse } from "http";
 import { formatFileSize, getPureExtensionName } from "../../../file";
-import { getPrism } from "./prism";
+import { ExtPrismMap, getPrism } from "./prism";
 import { responseFileStream } from "../base";
 import { error403, error404, error500 } from "../base";
 // https://ejs.bootcss.com/#docs
@@ -16,8 +16,10 @@ const responseHtml = (res: ServerResponse, html: string | Buffer) => {
     res.end();
 };
 const responseEJS = (res: ServerResponse, ejsName: string, options?: ejs.Data) => {
-    const template = fs.readFileSync(`./lib/http/server/pages/${ejsName}`).toString('utf-8');
-    responseHtml(res, ejs.render(template, options));
+    const currentDirectory = "./lib/http/server/pages";
+    const templatePath = `${currentDirectory}/${ejsName}`;
+    const template = fs.readFileSync(templatePath).toString('utf-8');
+    responseHtml(res, ejs.render(template, {filename: templatePath, ...options}));
 };
 
 
@@ -100,8 +102,19 @@ export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName
         } else if ('md' === extName) {
             // Markdown
             const text = fs.readFileSync(fileName, { encoding: 'utf8' }).toString();
+            const testLanguageNames = text.match(/(?<=(\r\n|\n|\r)```).+(?=\r\n|\n|\r)/g);
+            const sourceNames = [];
+            if (testLanguageNames) {
+                const languageNames = new Set<string>(Object.values(testLanguageNames));
+                for (let lang of languageNames) {
+                    if (ExtPrismMap.has(lang)) {
+                        sourceNames.push(ExtPrismMap.get(lang));
+                    }
+                }
+            }
             responseEJS(res, "mdView.ejs", {
-                text
+                text,
+                sourceNames
             });
             resolve(); return;
         }
