@@ -81,9 +81,9 @@ export const responseDirectoryHtml = (res: ServerResponse, topFileName: string, 
 };
 
 export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName: string, fileStat: fs.Stats) => new Promise<void>((resolve, rejects) => {
-    const Referer = req.headers['referer'];
+    const UserAgent = req.headers['user-agent'];
     const extName = getPureExtensionName(fileName);
-    if(Referer) {
+    if(UserAgent) {
         // 来自浏览器访问
         const prismInfo = getPrism(extName);
         if (prismInfo) {
