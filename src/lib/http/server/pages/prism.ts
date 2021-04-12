@@ -6,7 +6,7 @@
 // const CDN_URL = "http://127.0.0.1/static/prism/1.23.0";
 // const CDN_URL = "http://192.168.19.90/static/prism/1.23.0";
 
-export const ExtPrismMap = new Map<string, undefined | string | [string | Array<string>, string]>(
+const PrismExtMap = new Map<string, undefined | string | [string | Array<string>, string]>(
     [
         // ext [sourceName languageName]
         // ext undefined = ext [undefined ext]
@@ -51,14 +51,50 @@ export const ExtPrismMap = new Map<string, undefined | string | [string | Array<
     ]
 );
 
+const PrismLanguageNames = (() => {
+    const dump = new Set<string>();
+    for (let item of PrismExtMap.values()) {
+        if(item) {
+            if (item instanceof Array) {
+                dump.add(item[1])
+            } else {
+                dump.add(item)
+            }
+        }
+    }
+    return dump;
+})();
+
+export const filterPrismLanguageNames = (languageNames: Array<string> | Set<string>, dumpNames: Array<string>): void => {
+    const testDid = new Set<string>();
+    for (let lang of languageNames) {
+        lang = lang.toLowerCase();
+        if (testDid.has(lang)) continue;
+        if (PrismExtMap.has(lang)) {
+            const languageName = PrismExtMap.get(lang);
+            if(languageName) {
+                if (languageName instanceof Array) {
+                    dumpNames.push(languageName[1])
+                } else {
+                    dumpNames.push(languageName)
+                }
+            }
+        } else if (PrismLanguageNames.has(lang)) {
+            dumpNames.push(lang)
+        }
+        testDid.add(lang);
+    }
+    testDid.clear();
+}
+
 /**
  *
  * @param extname
  * @returns [sourceName, languageName, cdnURL]
  */
 export const getPrism = (extname: string): undefined | [undefined | string | Array<string>, string] => {
-    if (ExtPrismMap.has(extname)) {
-        const item = ExtPrismMap.get(extname);
+    if (PrismExtMap.has(extname)) {
+        const item = PrismExtMap.get(extname);
         if (item instanceof Array) {
             const [sourceNames, languageName] = item;
             return [sourceNames, languageName];

@@ -4,7 +4,7 @@ import * as ejs from "ejs";
 import * as child_process from 'child_process';
 import { IncomingMessage, ServerResponse } from "http";
 import { formatFileSize, getPureExtensionName } from "../../../file";
-import { ExtPrismMap, getPrism } from "./prism";
+import { getPrism, filterPrismLanguageNames } from "./prism";
 import { responseFileStream } from "../base";
 import { error403, error404, error500 } from "../base";
 // https://ejs.bootcss.com/#docs
@@ -103,14 +103,9 @@ export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName
             // Markdown
             const text = fs.readFileSync(fileName, { encoding: 'utf8' }).toString();
             const testLanguageNames = text.match(/(?<=(\r\n|\n|\r)```).+(?=\r\n|\n|\r)/g);
-            const sourceNames = [];
+            const sourceNames = new Array<string>();
             if (testLanguageNames) {
-                const languageNames = new Set<string>(Object.values(testLanguageNames));
-                for (let lang of languageNames) {
-                    if (ExtPrismMap.has(lang)) {
-                        sourceNames.push(ExtPrismMap.get(lang));
-                    }
-                }
+                filterPrismLanguageNames(Object.values(testLanguageNames), sourceNames);
             }
             responseEJS(res, "mdView.ejs", {
                 text,
