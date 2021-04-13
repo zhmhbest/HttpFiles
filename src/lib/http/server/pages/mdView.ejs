@@ -19,27 +19,12 @@
 <script>
     const preElement = document.querySelector('pre');
     const showElement = document.querySelector('div');
-    // Showdown
     const converter = new showdown.Converter({
         tables: true,
-        extensions: ['topic']
+        extensions: ['topic', 'latex']
     });
-
     showElement.innerHTML = converter.makeHtml(preElement.innerText);
     preElement.remove();
-
-    // Topic
-    // for (let headLine of document.querySelectorAll('h1,h2,h3,h4')) {
-    //     console.log(headLine.innerText, headLine.nodeName)
-    // }
-
-    // // Katex
-    // renderMathInElement(showElement, {
-    //     delimiters: [
-    //         { left: "$$", right: "$$", display: true },
-    //         { left: "$", right: "$", display: false }
-    //     ]
-    // });
 </script>
 </body>
 </html>

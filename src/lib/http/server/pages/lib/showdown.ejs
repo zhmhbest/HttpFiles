@@ -8,8 +8,7 @@
      * 显示目录
      */
     showdown.extension('topic', function () {
-        console.log("topic");
-        const matches = [];
+        // console.log("topic");
         return [
             {
                 type: 'lang',
@@ -18,6 +17,38 @@
                     return "<div id='topic'>这是目录</div>";
                 }
             }
+        ]
+    });
+    // Topic
+    // for (let headLine of document.querySelectorAll('h1,h2,h3,h4')) {
+    //     console.log(headLine.innerText, headLine.nodeName)
+    // }
+
+    /**
+     * 提取公式
+     */
+     showdown.extension('latex', function () {
+        // console.log("latex");
+        const __D__ = '¨D';
+        const __H__ = '(?<=\\r\\n|\\n|\\r)';
+        const __T__ = '(?=\\r\\n|\\n|\\r)';
+        return [
+            {
+                type: 'lang',
+                regex: new RegExp(`${__H__}${__D__}${__D__}[\\s\\S]+?${__D__}${__D__}${__T__}`, 'g'),
+                replace: function (text, matchArray) {
+                    text = text.substr(__D__.length * 2, text.length - 4 * __D__.length);
+                    return katex.renderToString(text, { throwOnError: false });
+                }
+            },
+            {
+                type: 'lang',
+                regex: new RegExp(`${__D__}[\\s\\S]+?${__D__}`, 'g'),
+                replace: function (text, matchArray) {
+                    text = text.substr(__D__.length, text.length - 2 * __D__.length);
+                    return katex.renderToString(text, { throwOnError: false });
+                }
+            },
         ]
     });
 </script>
