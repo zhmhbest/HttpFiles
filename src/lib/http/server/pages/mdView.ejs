@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -12,14 +13,26 @@
 <div></div>
 <%- include(`./showdownSources.ejs`); %>
 <%- include(`./prismSources.ejs`, {sourceNames}); %>
+<%- include(`./katexSources.ejs`); %>
 <script>
-    const converter = new showdown.Converter();
     const preElement = document.querySelector('pre');
-    document.querySelector('div').innerHTML = converter.makeHtml(preElement.innerText);
+    const showElement = document.querySelector('div');
+    // Showdown
+    const converter = new showdown.Converter();
+
+    showElement.innerHTML = converter.makeHtml(preElement.innerText);
     preElement.remove();
     // for (let headLine of document.querySelectorAll('h1,h2,h3,h4')) {
     //     console.log(headLine.innerText, headLine.nodeName)
     // }
+
+    // // Katex
+    // renderMathInElement(showElement, {
+    //     delimiters: [
+    //         { left: "$$", right: "$$", display: true },
+    //         { left: "$", right: "$", display: false }
+    //     ]
+    // });
 </script>
 </body>
 </html>
