@@ -520,6 +520,8 @@ const ExtMimeTypeMap = new Map<string, string>(
         ["snf", "application/x-font-snf"],
         ["ttf", "application/x-font-ttf"],
         ["ttc", "application/x-font-ttf"],
+        ["woff", "application/font-woff"],
+        ["woff2", "application/font-woff2"],
         ["pfa", "application/x-font-type1"],
         ["pfb", "application/x-font-type1"],
         ["pfm", "application/x-font-type1"],
