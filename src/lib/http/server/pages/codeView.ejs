@@ -18,6 +18,6 @@
         <div class="main">
             <pre class="line-numbers"><code class="match-braces rainbow-braces language-<%- languageName %> "><%= text %></code></pre>
         </div>
-        <%- include(`./prismSources.ejs`, {sourceNames}); %>
+        <%- include(`./lib/prism.ejs`, {sourceNames}); %>
     </body>
 </html>
