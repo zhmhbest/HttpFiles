@@ -1,6 +1,7 @@
 <% const cdnShowdownURL = "https://cdn.bootcdn.net/ajax/libs/showdown/1.9.1" %>
 <script src="<%- cdnShowdownURL %>/showdown.min.js"></script>
 <script>
+    // https://katex.org/docs/options.html
     // console.log(showdown.getDefaultOptions(););
     // console.log(showdown.getAllExtensions());
 
@@ -19,10 +20,12 @@
             }
         ]
     });
-    // Topic
-    // for (let headLine of document.querySelectorAll('h1,h2,h3,h4')) {
-    //     console.log(headLine.innerText, headLine.nodeName)
-    // }
+
+    function LatexFilter(text) {
+        // text = text.replace(/\\\|/g, '\\vert');
+        // console.log(text);
+        return text;
+    }
 
     /**
      * 提取公式
@@ -37,18 +40,28 @@
                 type: 'lang',
                 regex: new RegExp(`${__H__}${__D__}${__D__}[\\s\\S]+?${__D__}${__D__}${__T__}`, 'g'),
                 replace: function (text, matchArray) {
-                    text = text.substr(__D__.length * 2, text.length - 4 * __D__.length);
-                    return katex.renderToString(text, { throwOnError: false });
+                    text = LatexFilter(text.substr(__D__.length * 2, text.length - 4 * __D__.length).trim());
+                    return katex.renderToString(text, { throwOnError: false, displayMode: true, leqno: false });
                 }
             },
             {
                 type: 'lang',
                 regex: new RegExp(`${__D__}[\\s\\S]+?${__D__}`, 'g'),
                 replace: function (text, matchArray) {
-                    text = text.substr(__D__.length, text.length - 2 * __D__.length);
+                    text = LatexFilter(text.substr(__D__.length, text.length - 2 * __D__.length).trim());
                     return katex.renderToString(text, { throwOnError: false });
                 }
             },
         ]
     });
+
+    window.onload = function() {
+        // Topic
+        const topic = document.querySelector('#topic');
+        if(topic) {
+            for (let headLine of document.querySelectorAll('h1,h2,h3,h4')) {
+                console.log(headLine.innerText, headLine.nodeName)
+            }
+        }
+    }
 </script>
