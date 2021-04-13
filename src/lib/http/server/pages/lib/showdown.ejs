@@ -44,14 +44,14 @@
                     return katex.renderToString(text, { throwOnError: false, displayMode: true, leqno: false });
                 }
             },
-            {
-                type: 'lang',
-                regex: new RegExp(`${__D__}[\\s\\S]+?${__D__}`, 'g'),
-                replace: function (text, matchArray) {
-                    text = LatexFilter(text.substr(__D__.length, text.length - 2 * __D__.length).trim());
-                    return katex.renderToString(text, { throwOnError: false });
-                }
-            },
+            // {
+            //     type: 'lang',
+            //     regex: new RegExp(`${__D__}[\\s\\S]+?${__D__}`, 'g'),
+            //     replace: function (text, matchArray) {
+            //         text = LatexFilter(text.substr(__D__.length, text.length - 2 * __D__.length).trim());
+            //         return katex.renderToString(text, { throwOnError: false });
+            //     }
+            // },
         ]
     });
 
