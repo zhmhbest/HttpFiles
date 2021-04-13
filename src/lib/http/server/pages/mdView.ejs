@@ -3,9 +3,11 @@
 <head>
     <meta charset="utf-8">
     <style>
+        /* *{padding:0;margin:0;} */
         body{color:lightgrey;background-color:#333333;width:80%;margin-left:10%;margin-right:10%;}
         a{text-decoration:none}a:link{color:pink}a:visited{color:hotpink}
         blockquote{background-color:#524c4c;border-left:4px solid #a89a9a;}
+        table{border: 1px solid lightgrey;}
     </style>
 </head>
 <body>
@@ -18,10 +20,15 @@
     const preElement = document.querySelector('pre');
     const showElement = document.querySelector('div');
     // Showdown
-    const converter = new showdown.Converter();
+    const converter = new showdown.Converter({
+        tables: true,
+        extensions: ['topic']
+    });
 
     showElement.innerHTML = converter.makeHtml(preElement.innerText);
     preElement.remove();
+
+    // Topic
     // for (let headLine of document.querySelectorAll('h1,h2,h3,h4')) {
     //     console.log(headLine.innerText, headLine.nodeName)
     // }

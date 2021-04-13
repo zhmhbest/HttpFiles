@@ -1,2 +1,23 @@
 <% const cdnShowdownURL = "https://cdn.bootcdn.net/ajax/libs/showdown/1.9.1" %>
 <script src="<%- cdnShowdownURL %>/showdown.min.js"></script>
+<script>
+    // console.log(showdown.getDefaultOptions(););
+    // console.log(showdown.getAllExtensions());
+
+    /**
+     * 显示目录
+     */
+    showdown.extension('topic', function () {
+        console.log("topic");
+        const matches = [];
+        return [
+            {
+                type: 'lang',
+                regex: /(?<=\r\n|\n|\r)\[TOC\](?=\r\n|\n|\r)/i,
+                replace: function (text, matchArray) {
+                    return "<div id='topic'>这是目录</div>";
+                }
+            }
+        ]
+    });
+</script>
