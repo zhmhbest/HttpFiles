@@ -86,7 +86,7 @@ export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName
     const extName = getPureExtensionName(fileName);
     const UserAgent = req.headers['user-agent'];
     // console.log(UserAgent, UserAgent?.indexOf('Chrome/'));
-    if(UserAgent && UserAgent.indexOf('Chrome/') >= 0) {
+    if(UserAgent && (UserAgent.indexOf('Chrome/') >= 0 || UserAgent.indexOf('Mozilla/') >= 0)) {
         // 来自浏览器访问
         const prismInfo = getPrism(extName);
         if (prismInfo) {
