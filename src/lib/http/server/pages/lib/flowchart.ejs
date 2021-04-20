@@ -1,2 +1,19 @@
+<% const cdnRaphaelURL = "https://cdn.bootcdn.net/ajax/libs/raphael/2.3.0" %>
 <% const cdnFlowchartURL = "https://cdn.bootcdn.net/ajax/libs/flowchart/1.15.0" %>
+<script src="<%- cdnRaphaelURL %>/raphael.min.js"></script>
 <script src="<%- cdnFlowchartURL %>/flowchart.min.js"></script>
+<script>
+__ONLOADS__.push(function() {
+    const elements = document.querySelectorAll("code[class*='language-flow']");
+    for (let ele of elements) {
+        const text = ele.innerText;
+        ele.innerHTML = "";
+        flowchart.parse(text).drawSVG(ele.parentElement);
+    }
+});
+</script>
+<style>
+    pre[class*='language-flow'] {
+        background-color: rgb(100, 100, 100);
+    }
+</style>

@@ -54,7 +54,6 @@
         ]
     });
 
-    //
     __ONLOADS__.push(function() {
         // Topic
         const topic = document.querySelector('#topic');
@@ -62,11 +61,6 @@
             for (let headLine of document.querySelectorAll('h1,h2,h3,h4')) {
                 console.log(headLine.innerText, headLine.nodeName)
             }
-        }
-        // Latex
-        const latexElements = document.querySelectorAll("code[class*='language-latex']");
-        for (let ele of latexElements) {
-            ele.parentElement.innerHTML = katex.renderToString(ele.innerText, { throwOnError: false, displayMode: true, leqno: false });
         }
     });
 </script>

@@ -13,3 +13,11 @@
     });
 </script>
 -->
+<script>
+__ONLOADS__.push(function() {
+    const elements = document.querySelectorAll("code[class*='language-latex']");
+    for (let ele of elements) {
+        ele.parentElement.innerHTML = katex.renderToString(ele.innerText, { throwOnError: false, displayMode: true, leqno: false });
+    }
+});
+</script>
