@@ -8,10 +8,7 @@ __ONLOADS__.push(function() {
     const elements = document.querySelectorAll("code[class*='language-echarts']");
     for (let ele of elements) {
         const parent = ele.parentElement;
-        parent.style.paddingLeft = "10%";
-        parent.style.paddingRight = "10%";
-        parent.style.backgroundColor = "rgba(0, 0, 0, 0)";
-        const contentWidth = parent.clientWidth * 0.7;
+        const contentWidth = parent.clientWidth;
         const imgW = parseInt(contentWidth * 0.95);
         const imgH = parseInt((imgW / 16) * 9);
 
@@ -25,7 +22,10 @@ __ONLOADS__.push(function() {
             text = text.substr(0, text.length - maybeTextEnd.length);
         }
         const options = JSON5.parse(text);
-        ele.innerHTML = "";
+        if (undefined === options['backgroundColor']) {
+            options['backgroundColor'] = "rgba(0, 0, 0, 0)";
+        }
+        ele.remove();
 
         const g = document.createElement("div");
         g.style.padding = "0";
@@ -34,7 +34,7 @@ __ONLOADS__.push(function() {
         g.style.height = `${imgH}px`;
         parent.appendChild(g);
 
-        echarts.init(g, 'dark').setOption(options);
+        echarts.init(g, 'dark', {renderer: 'svg'}).setOption(options);
     }
 });
 </script>
