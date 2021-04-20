@@ -13,10 +13,12 @@
 <body>
 <pre><%= text %></pre>
 <div></div>
+<%- include(`./lib/onloads.ejs`); %>
 <%- include(`./lib/showdown.ejs`); %>
 <%- include(`./lib/prism.ejs`, {sourceNames}); %>
 <%- include(`./lib/katex.ejs`); %>
 <%- include(`./lib/mermaid.ejs`); %>
+<%- include(`./lib/flowchart.ejs`); %>
 <script>
     const preElement = document.querySelector('pre');
     const showElement = document.querySelector('div');

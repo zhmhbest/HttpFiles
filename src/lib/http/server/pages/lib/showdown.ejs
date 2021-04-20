@@ -4,7 +4,6 @@
     // https://katex.org/docs/options.html
     // console.log(showdown.getDefaultOptions(););
     // console.log(showdown.getAllExtensions());
-
     /**
      * 显示目录
      */
@@ -55,7 +54,8 @@
         ]
     });
 
-    window.onload = function() {
+    //
+    __ONLOADS__.push(function() {
         // Topic
         const topic = document.querySelector('#topic');
         if(topic) {
@@ -68,5 +68,5 @@
         for (let ele of latexElements) {
             ele.parentElement.innerHTML = katex.renderToString(ele.innerText, { throwOnError: false, displayMode: true, leqno: false });
         }
-    }
+    });
 </script>
