@@ -11,13 +11,21 @@ __ONLOADS__.push(function() {
         parent.style.paddingLeft = "10%";
         parent.style.paddingRight = "10%";
         parent.style.backgroundColor = "rgba(0, 0, 0, 0)";
-        const contentWidth = parent.clientWidth * 0.8;
+        const contentWidth = parent.clientWidth * 0.7;
         const imgW = parseInt(contentWidth * 0.95);
         const imgH = parseInt((imgW / 16) * 9);
 
-        const text = ele.innerText;
-        ele.innerHTML = "";
+        let text = ele.innerText.toString().trim();
+        const maybeTextStart = "option = ";
+        const maybeTextEnd = ";";
+        if (text.startsWith(maybeTextStart)) {
+            text = text.substr(maybeTextStart.length);
+        }
+        if (text.endsWith(maybeTextEnd)) {
+            text = text.substr(0, text.length - maybeTextEnd.length);
+        }
         const options = JSON5.parse(text);
+        ele.innerHTML = "";
 
         const g = document.createElement("div");
         g.style.padding = "0";
