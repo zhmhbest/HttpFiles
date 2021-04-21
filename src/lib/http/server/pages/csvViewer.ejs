@@ -1,0 +1,41 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="https://www.layuicdn.com/layui/css/layui.css" />
+    <style>
+        body{width:90%;margin-left:5%;margin-right:5%;}
+    </style>
+</head>
+<body>
+<table lay-filter="csvTable">
+<thead>
+    <tr>
+        <% for(let column of aoa[0]) { %>
+            <td lay-data="{field:'<%= column %>',sort:true}"><%= column %></td>
+        <% } %>
+    </tr>
+</thead>
+<tbody>
+    <% for(let i=1; i<aoa.length; i++) { line=aoa[i]; %>
+    <tr>
+        <% for(let item of line) { %>
+            <td><%= item %></td>
+        <% } %>
+    </tr>
+    <% } %>
+</tbody>
+</table>
+<script src="https://www.layuicdn.com/layui/layui.js"></script>
+<script>
+    layui.use('table', function () {
+        var table = layui.table;
+        //执行渲染
+        table.init('csvTable', {
+            limit: 50,
+            page: true,
+            toolbar: 'default',
+        });
+    });
+</script>
+</body>
+</html>

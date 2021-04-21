@@ -39,7 +39,7 @@ const PrismExtMap = new Map<string, undefined | string | [undefined | string | A
         ['y', 'bnf'],
         ['jison', 'bnf'],
         // Config
-        ['csv', undefined],
+        // ['csv', undefined],
         ['ini', 'ini'],
         ['yaml', 'yaml'],
         ['toml', 'toml'],

@@ -3,7 +3,7 @@ import * as path from "path";
 import * as ejs from "ejs";
 import * as child_process from 'child_process';
 import { IncomingMessage, ServerResponse } from "http";
-import { formatFileSize, getPureExtensionName } from "../../../file";
+import { formatFileSize, getPureExtensionName, readCSVAsync, readUTF8Text } from "../../../file";
 import { getPrism, filterPrismLanguageNames } from "./prism";
 import { responseFileStream } from "../base";
 import { error403, error404, error500 } from "../base";
@@ -19,7 +19,7 @@ const responseEJS = (res: ServerResponse, ejsName: string, options?: ejs.Data) =
     const currentDirectory = "./lib/http/server/pages";
     const templatePath = `${currentDirectory}/${ejsName}`;
     const template = fs.readFileSync(templatePath).toString('utf-8');
-    responseHtml(res, ejs.render(template, {filename: templatePath, ...options}));
+    responseHtml(res, ejs.render(template, { filename: templatePath, ...options }));
 };
 
 
@@ -86,13 +86,13 @@ export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName
     const extName = getPureExtensionName(fileName);
     const UserAgent = req.headers['user-agent'];
     // console.log(UserAgent, UserAgent?.indexOf('Chrome/'));
-    if(UserAgent && (UserAgent.indexOf('Chrome/') >= 0 || UserAgent.indexOf('Mozilla/') >= 0)) {
+    if (UserAgent && (UserAgent.indexOf('Chrome/') >= 0 || UserAgent.indexOf('Mozilla/') >= 0)) {
         // 来自浏览器访问
         const prismInfo = getPrism(extName);
         if (prismInfo) {
             // CodeView
             const [sourceNames, languageName] = prismInfo;
-            const text = fs.readFileSync(fileName, { encoding: 'utf8' }).toString();
+            const text = readUTF8Text(fileName);
             responseEJS(res, "codeView.ejs", {
                 text,
                 languageName,
@@ -101,7 +101,7 @@ export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName
             resolve(); return;
         } else if ('md' === extName) {
             // Markdown
-            const text = fs.readFileSync(fileName, { encoding: 'utf8' }).toString();
+            const text = readUTF8Text(fileName);
             const testLanguageNames = text.match(/(?<=(\r\n|\n|\r)```).+(?=\r\n|\n|\r)/g);
             const sourceNames = new Array<string>();
             if (testLanguageNames) {
@@ -112,6 +112,15 @@ export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName
                 sourceNames
             });
             resolve(); return;
+        } else if ('csv' === extName) {
+            readCSVAsync(fileName).then(aoa => {
+                responseEJS(res, "csvViewer.ejs", {
+                    // text: JSON.stringify(aoa)
+                    aoa
+                });
+                resolve();
+            });
+            return;
         }
     }
     // 默认响应方式
