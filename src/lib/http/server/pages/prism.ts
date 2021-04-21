@@ -6,7 +6,7 @@
 // const CDN_URL = "http://127.0.0.1/static/prism/1.23.0";
 // const CDN_URL = "http://192.168.19.90/static/prism/1.23.0";
 
-const PrismExtMap = new Map<string, undefined | string | [string | Array<string>, string]>(
+const PrismExtMap = new Map<string, undefined | string | [undefined | string | Array<string>, string]>(
     [
         // ext [sourceName languageName]
         // ext undefined = ext [undefined ext]
@@ -16,6 +16,7 @@ const PrismExtMap = new Map<string, undefined | string | [string | Array<string>
         ['sh', 'bash'],
         ['bat', 'batch'],
         ['cmd', 'batch'],
+        ['ps1', 'powershell'],
         // Language
         ['sql', 'sql'],
         ['py', 'python'],
@@ -29,8 +30,10 @@ const PrismExtMap = new Map<string, undefined | string | [string | Array<string>
         // C/C++
         ['c', 'c'],
         ['h', 'c'],
+        ['inl', 'c'],
         ['cpp', 'cpp'],
         ['cmake', 'cmake'],
+        ['cs', 'csharp'],
         // BNF
         ['l', 'bnf'],
         ['y', 'bnf'],
@@ -47,7 +50,8 @@ const PrismExtMap = new Map<string, undefined | string | [string | Array<string>
         ['php', [['markup-templating', 'php'], 'php']],
         // Others
         ['tex', 'latex'],
-        ['iml', 'html'],
+        ['iml', [undefined, 'html']],
+        ['csproj', [undefined, 'html']],
     ]
 );
 
@@ -90,7 +94,7 @@ export const filterPrismLanguageNames = (languageNames: Array<string> | Set<stri
 /**
  *
  * @param extname
- * @returns [sourceName, languageName, cdnURL]
+ * @returns [sourceName, languageName]
  */
 export const getPrism = (extname: string): undefined | [undefined | string | Array<string>, string] => {
     if (PrismExtMap.has(extname)) {
