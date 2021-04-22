@@ -50,12 +50,14 @@ export interface HttpRequestInterface {
 export const errorMessage = (res: ServerResponse, code: number, message: string): void => {
     res.setHeader("Content-Type", "text/html");
     res.writeHead(code);
-    res.write(message);
+    res.write(`<style>body{color:grey;background-color:#333333;width:80%;margin-left:10%;margin-right:10%;}h1{color:red;}</style>`);
+    res.write(`<h1>Error</h1>`);
+    res.write(`<p>${message}</p>`);
     res.end();
 }
-export const error403 = (res: ServerResponse) => errorMessage(res, 403, "Forbidden!");
-export const error404 = (res: ServerResponse) => errorMessage(res, 404, "Not Found!");
-export const error500 = (res: ServerResponse) => errorMessage(res, 500, "Internal Server Error!");
+export const error403 = (res: ServerResponse, msg?: string): void => errorMessage(res, 403, msg || "Forbidden!");
+export const error404 = (res: ServerResponse, msg?: string): void => errorMessage(res, 404, msg || "Not Found!");
+export const error500 = (res: ServerResponse, msg?: string): void => errorMessage(res, 500, msg || "Internal Server Error!");
 
 /**
  * 返回文件流

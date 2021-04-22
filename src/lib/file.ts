@@ -1,6 +1,5 @@
 import * as path from "path";
 import * as fs from "fs";
-import * as co from "co";
 import * as csvParse from "csv-parse";
 
 export const readUTF8Text = (filename: string): string => {

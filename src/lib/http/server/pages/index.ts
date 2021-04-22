@@ -98,7 +98,8 @@ export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName
                 languageName,
                 sourceNames
             });
-            resolve(); return;
+            resolve();
+            return;
         } else if ('md' === extName) {
             // Markdown
             const text = readUTF8Text(fileName);
@@ -111,13 +112,17 @@ export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName
                 text,
                 sourceNames
             });
-            resolve(); return;
+            resolve();
+            return;
         } else if ('csv' === extName) {
             readCSVAsync(fileName).then(aoa => {
                 responseEJS(res, "csvViewer.ejs", {
                     // text: JSON.stringify(aoa)
                     aoa
                 });
+                resolve();
+            }).catch(err => {
+                error500(res, err.toString())
                 resolve();
             });
             return;
