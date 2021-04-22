@@ -117,8 +117,7 @@ export const responseFile = (req: IncomingMessage, res: ServerResponse, fileName
         } else if ('csv' === extName) {
             readCSVAsync(fileName).then(aoa => {
                 responseEJS(res, "csvViewer.ejs", {
-                    // text: JSON.stringify(aoa)
-                    aoa
+                    text: Buffer.from(encodeURI(JSON.stringify(aoa))).toString('base64')
                 });
                 resolve();
             }).catch(err => {

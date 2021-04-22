@@ -7,24 +7,34 @@
     </style>
 </head>
 <body>
-<table lay-filter="csvTable">
-<thead>
-    <tr>
-        <% for(let column of aoa[0]) { %>
-            <td lay-data="{field:'<%= column %>',sort:true}"><%= column %></td>
-        <% } %>
-    </tr>
-</thead>
-<tbody>
-    <% for(let i=1; i<aoa.length; i++) { line=aoa[i]; %>
-    <tr>
-        <% for(let item of line) { %>
-            <td><%= item %></td>
-        <% } %>
-    </tr>
-    <% } %>
-</tbody>
-</table>
+<table lay-filter="csvTable"><thead id="csvHead"></thead><tbody id="csvBody"></tbody></table>
+<script>
+{
+    const csvData = JSON.parse(decodeURI(window.atob("<%- text %>", 'base64')));
+    const eleHead = document.getElementById("csvHead");
+    const eleBody = document.getElementById("csvBody");
+    {
+        const tr = document.createElement("tr");
+        for(let column of csvData[0]) {
+            const td = document.createElement("td");
+            td.innerHTML = column;
+            td.setAttribute("lay-data", JSON.stringify({field: column, sort: true}));
+            tr.appendChild(td);
+        }
+        eleHead.appendChild(tr);
+    }
+    for (let i=1; i<csvData.length;i++) {
+        const line = csvData[i];
+        const tr = document.createElement("tr");
+        for(let row of line) {
+            const td = document.createElement("td");
+            td.innerHTML = row;
+            tr.appendChild(td);
+        }
+        eleBody.appendChild(tr);
+    }
+}
+</script>
 <script src="https://www.layuicdn.com/layui/layui.js"></script>
 <script>
     layui.use('table', function () {
