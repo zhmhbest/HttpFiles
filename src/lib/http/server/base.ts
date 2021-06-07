@@ -70,16 +70,21 @@ export const responseFileStream = (req: IncomingMessage, res: ServerResponse, fi
     } as { start: number, end: number };
     const headerRange = req.headers['range'];
     if (headerRange) {
+        // bytes=0-(fileSize - 1)
         const matches = headerRange.match(/bytes=(?<start>\d+)-(?<end>\d+|$)/);
+        // console.log(matches);
         if (matches) {
             const groups = matches.groups as { start?: string, end?: string };
-            if (groups.start) fileRange.start = parseInt(groups.start);
-            if (groups.end) fileRange.end = parseInt(groups.end);
+            if (groups.start && groups.start.length > 0) fileRange.start = parseInt(groups.start);
+            if (groups.end && groups.end.length > 0) fileRange.end = parseInt(groups.end);
+            // bytes 0-(fileSize - 1)/fileSize
+            // res.writeHead(206);
+            res.setHeader('Content-Range', `bytes ${fileRange.start}-${fileRange.end}/${fileStat.size}`);
         }
     }
     // Stream
     res.setHeader('Content-Type', getMimeTypeByExtname(extName));
-    res.setHeader('Content-Range', `bytes ${fileRange.start}-${fileRange.end}/${fileStat.size}`);
+    // end - start + 1
     res.setHeader('Content-Length', (fileRange.end - fileRange.start + 1));
     fs.createReadStream(fileName, {
         flags: 'r',

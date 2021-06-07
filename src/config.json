@@ -12,6 +12,10 @@
             "prefix": "/e"
         },
         {
+            "dir": "F:/",
+            "prefix": "/f"
+        },
+        {
             "dir": "D:/ProgramFiles/Nginx/nginx-1.18.0/html/bookmark",
             "prefix": "/bookmark"
         }
