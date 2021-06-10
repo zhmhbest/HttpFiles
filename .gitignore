@@ -1,8 +1,19 @@
+# IDE Config
+/.idea/
+/.vscode/
+
+# Modules & Lock
 /node_modules/
 /package-lock.json
 /yarn.lock
 /yarn-error.log
-/cache/
+
+# Output
+/dist/
 /out/
-.trash/
+/target/
+
+# Cache
+cache/
 dump/
+.trash/

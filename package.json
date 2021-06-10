@@ -1,30 +1,27 @@
 {
-  "name": "ts-project",
-  "version": "1.0.0",
-  "description": "",
-  "main": "src/index.ts",
-  "scripts": {
-    "dev": "pushd src & ts-node index.ts & popd",
-    "build": "webpack"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@types/csv-parse": "^1.2.2",
-    "@types/ejs": "^3.0.6",
-    "@types/multiparty": "0.0.32",
-    "@types/node": "^14.14.32",
-    "copy-webpack-plugin": "^6.4.1",
-    "ts-loader": "^8.0.17",
-    "ts-node": "^9.1.1",
-    "typescript": "^4.2.3",
-    "webpack": "^4.46.0",
-    "webpack-cli": "^3.3.12"
-  },
-  "dependencies": {
-    "csv-parse": "^4.15.4",
-    "ejs": "^3.1.6",
-    "multiparty": "^4.2.2"
-  }
+    "name": "http-files",
+    "version": "1.0.0",
+    "description": "",
+    "main": "./src/main/index.ts",
+    "scripts": {
+        "main": "pushd src & pushd main & ts-node index.ts",
+        "test": "pushd src & pushd test & ts-node index.ts",
+        "build": "webpack",
+        "out": "pushd out & node index.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@types/node": "^14.14.32",
+        "copy-webpack-plugin": "^6.4.1",
+        "ts-loader": "^8.0.17",
+        "ts-node": "^9.1.1",
+        "typescript": "^4.2.3",
+        "webpack": "^4.46.0",
+        "webpack-cli": "^3.3.12"
+    },
+    "dependencies": {
+        "json5": "^2.2.0"
+    }
 }

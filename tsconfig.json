@@ -5,21 +5,25 @@
         "target": "ES6",
         // "sourceMap": true,
         // "declaration": true,
-        "rootDir": "./src",
-        "outDir": "./out",
-
+        "rootDir": "src/main",
+        "outDir": "out",
         // 源码检查
+        "allowJs": false,
         "strict": true,
         "skipLibCheck": true,
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
-        // "noUnusedParameters": true,
+        "noUnusedParameters": false,
+        // "noImplicitAny": true,
+        // "noImplicitThis": true,
+        // "strictFunctionTypes": true,
     },
     "include": [
-        "./src/**/*"
+        "src/main/**/*"
     ],
     "exclude": [
         "node_modules",
+        "target",
         "dist",
         "out"
     ]
